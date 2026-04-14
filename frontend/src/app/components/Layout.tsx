@@ -1,8 +1,20 @@
+import { useState } from "react";
 import { Link, Outlet, useLocation } from "react-router";
-import { Code2, Zap, Globe, Linkedin, Github, Swords } from "lucide-react";
+import { Code2, Zap, Globe, Linkedin, Github, Swords, Menu, X } from "lucide-react";
 
 export function Layout() {
   const location = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const navLinks = [
+    { to: "/", label: "Leaderboard", icon: null },
+    { to: "/register", label: "Claim Spot", icon: <Zap className="h-3.5 w-3.5" /> },
+    { to: "/headon", label: "HeadOn", icon: <Swords className="h-3.5 w-3.5" /> },
+    { to: "/about", label: "About", icon: null },
+  ];
+
+  const isActive = (path: string) =>
+    path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#0a0a0a] text-white">
@@ -11,64 +23,64 @@ export function Layout() {
         <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
           <div className="flex h-14 items-center justify-between sm:h-16">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2 transition-opacity hover:opacity-70">
+            <Link to="/" className="flex items-center gap-2 transition-opacity hover:opacity-70" onClick={() => setMenuOpen(false)}>
               <Code2 className="h-5 w-5 text-[#4ade80] sm:h-6 sm:w-6" strokeWidth={1.5} />
               <span className="font-['JetBrains_Mono'] text-base tracking-tight sm:text-lg">
                 Code<span className="text-[#4ade80]">Overtake</span>
               </span>
             </Link>
 
-            {/* Nav Links */}
-            <div className="flex items-center gap-4 font-['Archivo'] sm:gap-6">
-              <Link
-                to="/"
-                className={`relative text-sm transition-colors ${
-                  location.pathname === "/" ? "text-white" : "text-[#888888] hover:text-white"
-                }`}
-              >
-                Leaderboard
-                {location.pathname === "/" && (
-                  <div className="absolute -bottom-[13px] left-0 right-0 h-[2px] bg-[#4ade80] sm:-bottom-4" />
-                )}
-              </Link>
-              <Link
-                to="/register"
-                className={`relative flex items-center gap-1.5 text-sm transition-colors ${
-                  location.pathname === "/register" ? "text-white" : "text-[#888888] hover:text-white"
-                }`}
-              >
-                <Zap className="hidden h-3.5 w-3.5 sm:block" />
-                Claim Spot
-                {location.pathname === "/register" && (
-                  <div className="absolute -bottom-[13px] left-0 right-0 h-[2px] bg-[#4ade80] sm:-bottom-4" />
-                )}
-              </Link>
-              <Link
-                to="/headon"
-                className={`relative flex items-center gap-1.5 text-sm transition-colors ${
-                  location.pathname === "/headon" ? "text-white" : "text-[#888888] hover:text-white"
-                }`}
-              >
-                <Swords className="hidden h-3.5 w-3.5 sm:block" />
-                HeadOn
-                {location.pathname === "/headon" && (
-                  <div className="absolute -bottom-[13px] left-0 right-0 h-[2px] bg-[#4ade80] sm:-bottom-4" />
-                )}
-              </Link>
-              <Link
-                to="/about"
-                className={`relative text-sm transition-colors ${
-                  location.pathname === "/about" ? "text-white" : "text-[#888888] hover:text-white"
-                }`}
-              >
-                About
-                {location.pathname === "/about" && (
-                  <div className="absolute -bottom-[13px] left-0 right-0 h-[2px] bg-[#4ade80] sm:-bottom-4" />
-                )}
-              </Link>
+            {/* Desktop Nav Links */}
+            <div className="hidden items-center gap-6 font-['Archivo'] sm:flex">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className={`relative flex items-center gap-1.5 text-sm transition-colors ${
+                    isActive(link.to) ? "text-white" : "text-[#888888] hover:text-white"
+                  }`}
+                >
+                  {link.icon}
+                  {link.label}
+                  {isActive(link.to) && (
+                    <div className="absolute -bottom-4 left-0 right-0 h-[2px] bg-[#4ade80]" />
+                  )}
+                </Link>
+              ))}
             </div>
+
+            {/* Mobile Hamburger */}
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="flex h-9 w-9 items-center justify-center rounded text-[#888888] transition-colors hover:text-white sm:hidden"
+            >
+              {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Menu */}
+        {menuOpen && (
+          <div className="border-t border-[#1e1e1e] bg-[#0a0a0a] sm:hidden">
+            <div className="flex flex-col px-4 py-3 font-['Archivo']">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={() => setMenuOpen(false)}
+                  className={`flex items-center gap-2.5 rounded px-3 py-2.5 text-sm transition-colors ${
+                    isActive(link.to)
+                      ? "bg-[#4ade80]/10 text-[#4ade80]"
+                      : "text-[#888888] hover:bg-[#111111] hover:text-white"
+                  }`}
+                >
+                  {link.icon}
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Main Content */}

@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
 const { errorHandler } = require('./middlewares');
 
 const studentRoutes = require('./routes/students');
@@ -10,9 +9,6 @@ const adminRoutes = require('./routes/admin');
 
 const app = express();
 
-// Trust proxy (Cloudflare) – use X-Forwarded-For for rate limiting
-app.set('trust proxy', 1);
-
 // Security
 app.use(helmet());
 app.use(cors({
@@ -20,34 +16,13 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT'],
 }));
 
-// Rate limiting
-const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-// Stricter limits for write endpoints (register + edit)
-const writeLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: 'Too many requests, please try again later' },
-});
-
 // Body parsing
 app.use(express.json());
 
 // Routes
-app.use('/api/students', generalLimiter, studentRoutes);
-app.use('/api/leaderboard', generalLimiter, leaderboardRoutes);
-app.use('/api/admin', generalLimiter, adminRoutes);
-
-// Apply stricter limits to write endpoints
-app.post('/api/students/register', writeLimiter);
-app.put('/api/students/:rollno/usernames', writeLimiter);
+app.use('/api/students', studentRoutes);
+app.use('/api/leaderboard', leaderboardRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
