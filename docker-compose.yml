@@ -1,0 +1,19 @@
+services:
+  backend:
+    build: ./backend
+    container_name: codeovertake-backend
+    restart: unless-stopped
+    env_file: ./backend/.env
+    environment:
+      - NODE_ENV=production
+    ports:
+      - "6754:5000"
+
+  frontend:
+    build: ./frontend
+    container_name: codeovertake-frontend
+    restart: unless-stopped
+    ports:
+      - "6755:80"
+    depends_on:
+      - backend
