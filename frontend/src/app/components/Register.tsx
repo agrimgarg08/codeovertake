@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, Link } from "react-router";
-import { AlertCircle, ArrowLeft, Search, UserPlus, Eye, Trophy, GitBranch, BarChart3, Users, CheckCircle2, XCircle, Loader2, Zap, Flame, Target } from "lucide-react";
+import { AlertCircle, ArrowLeft, Search, UserPlus, Eye, Trophy, GitBranch, BarChart3, Users, CheckCircle2, XCircle, Loader2, Zap, Flame, Target, ChevronDown } from "lucide-react";
 import { platforms, type Platform } from "../mockData";
 import { searchStudents as apiSearchStudents, registerStudent as apiRegisterStudent, validatePlatformUsername } from "../api";
 import { GithubIcon, LeetcodeIcon, CodeforcesIcon, CodechefIcon } from "./PlatformIcons";
@@ -47,6 +47,17 @@ export function Register() {
   const [autoFilled, setAutoFilled] = useState(false);
   const [successData, setSuccessData] = useState<{ rollno: string; name: string; ranks: any; scores: any } | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [branches, setBranches] = useState<{ branchName: string; shortName: string }[]>([]);
+
+  // Fetch branches on mount
+  useEffect(() => {
+    fetch("https://api.sujal.info/api/nsut/branches")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success && Array.isArray(d.data)) setBranches(d.data);
+      })
+      .catch(() => {});
+  }, []);
 
   // Platform validation state
   const [platformValidation, setPlatformValidation] = useState<
@@ -439,16 +450,14 @@ export function Register() {
         </div>
       ) : (
         <div>
-          <div className="mb-8 flex items-center gap-4">
-            <button
-              onClick={() => setStep("search")}
-              className="flex items-center gap-2 text-sm text-[#888888] transition-colors hover:text-white"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </button>
-            <h1 className="font-['JetBrains_Mono'] text-3xl tracking-tight">Claim Your Spot</h1>
-          </div>
+          <button
+            onClick={() => setStep("search")}
+            className="mb-6 flex items-center gap-2 text-sm text-[#888888] transition-all hover:text-white hover:gap-3"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </button>
+          <h1 className="mb-8 font-['JetBrains_Mono'] text-2xl tracking-tight sm:text-3xl">Claim Your Spot</h1>
 
           {/* Roll Number Display */}
           {formData.rollNo && (
@@ -516,29 +525,64 @@ export function Register() {
                   <label htmlFor="branch" className="mb-2 block text-sm text-[#888888]">
                     Branch
                   </label>
-                  <input
-                    id="branch"
-                    type="text"
-                    value={formData.branch}
-                    onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
-                    readOnly={autoFilled}
-                    required
-                    className="h-12 w-full rounded border border-[#1e1e1e] bg-[#111111] px-4 text-white outline-none transition-colors focus:border-[#333333] read-only:text-[#888888]"
-                  />
+                  {autoFilled ? (
+                    <input
+                      id="branch"
+                      type="text"
+                      value={formData.branch}
+                      readOnly
+                      className="h-12 w-full rounded border border-[#1e1e1e] bg-[#111111] px-4 text-[#888888] outline-none"
+                    />
+                  ) : (
+                    <div className="relative">
+                      <select
+                        id="branch"
+                        value={formData.branch}
+                        onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
+                        required
+                        className="h-12 w-full appearance-none rounded border border-[#1e1e1e] bg-[#111111] px-4 pr-10 text-white outline-none transition-colors focus:border-[#333333]"
+                      >
+                        <option value="" disabled>Select branch</option>
+                        {branches.map((b) => (
+                          <option key={b.shortName} value={b.shortName}>
+                            {b.shortName} — {b.branchName}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#888888]" />
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label htmlFor="year" className="mb-2 block text-sm text-[#888888]">
                     Year
                   </label>
-                  <input
-                    id="year"
-                    type="text"
-                    value={formData.year}
-                    onChange={(e) => setFormData({ ...formData, year: e.target.value })}
-                    readOnly={autoFilled}
-                    required
-                    className="h-12 w-full rounded border border-[#1e1e1e] bg-[#111111] px-4 text-white outline-none transition-colors focus:border-[#333333] read-only:text-[#888888]"
-                  />
+                  {autoFilled ? (
+                    <input
+                      id="year"
+                      type="text"
+                      value={formData.year}
+                      readOnly
+                      className="h-12 w-full rounded border border-[#1e1e1e] bg-[#111111] px-4 text-[#888888] outline-none"
+                    />
+                  ) : (
+                    <div className="relative">
+                      <select
+                        id="year"
+                        value={formData.year}
+                        onChange={(e) => setFormData({ ...formData, year: e.target.value })}
+                        required
+                        className="h-12 w-full appearance-none rounded border border-[#1e1e1e] bg-[#111111] px-4 pr-10 text-white outline-none transition-colors focus:border-[#333333]"
+                      >
+                        <option value="" disabled>Select year</option>
+                        <option value="2022">2022</option>
+                        <option value="2023">2023</option>
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                      </select>
+                      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#888888]" />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
