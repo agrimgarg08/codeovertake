@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useParams, Navigate } from "react-router";
 import { ArrowLeft, ExternalLink, Edit3, X, Save, History, Clock, Share2, Plus, UserPlus, Trophy } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
@@ -746,6 +746,9 @@ export function StudentProfile() {
             <CombinedHeatmap platformData={heatmapData} />
           </div>
 
+          {/* Momentum Chart */}
+          <MomentumChart heatmapData={heatmapData} />
+
           {/* Per-platform heatmaps */}
           <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-3">
             {heatmapData.github && (
@@ -789,6 +792,128 @@ export function StudentProfile() {
             Share Profile
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+const PLATFORM_COLORS: Record<string, string> = {
+  github: "#4ade80",
+  leetcode: "#ffa116",
+  codeforces: "#1f8acb",
+};
+
+function MomentumChart({ heatmapData }: { heatmapData: Record<string, Record<string, number>> }) {
+  const chartData = useMemo(() => {
+    // Merge all platforms into one date→count map, and keep per-platform too
+    const merged: Record<string, number> = {};
+    const perPlatform: Record<string, Record<string, number>> = {};
+    for (const [platform, data] of Object.entries(heatmapData)) {
+      perPlatform[platform] = {};
+      for (const [date, count] of Object.entries(data)) {
+        merged[date] = (merged[date] || 0) + count;
+        perPlatform[platform][date] = (perPlatform[platform][date] || 0) + count;
+      }
+    }
+    const dates = Object.keys(merged).sort();
+    if (dates.length === 0) return [];
+
+    const start = new Date(dates[0]);
+    const end = new Date(dates[dates.length - 1]);
+    const allDates: string[] = [];
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      allDates.push(d.toISOString().slice(0, 10));
+    }
+
+    const windowDays = 7;
+    const sums: Record<string, number> = { total: 0 };
+    const platformKeys = Object.keys(perPlatform);
+    for (const k of platformKeys) sums[k] = 0;
+
+    const result: Record<string, any>[] = [];
+    for (let i = 0; i < allDates.length; i++) {
+      const date = allDates[i];
+      sums.total += merged[date] || 0;
+      for (const k of platformKeys) sums[k] += perPlatform[k]?.[date] || 0;
+      if (i >= windowDays) {
+        const prev = allDates[i - windowDays];
+        sums.total -= merged[prev] || 0;
+        for (const k of platformKeys) sums[k] -= perPlatform[k]?.[prev] || 0;
+      }
+      if (i >= windowDays - 1 && i % 7 === 0) {
+        const row: Record<string, any> = { date, total: sums.total };
+        for (const k of platformKeys) row[k] = sums[k];
+        result.push(row);
+      }
+    }
+    return result;
+  }, [heatmapData]);
+
+  if (chartData.length === 0) return null;
+
+  const platformKeys = Object.keys(heatmapData);
+
+  return (
+    <div className="rounded border border-[#1e1e1e] bg-[#111111] p-4 sm:p-6">
+      <h4 className="mb-1 font-['JetBrains_Mono'] text-xs uppercase tracking-wider text-[#888888]">
+        Momentum
+      </h4>
+      <p className="mb-4 text-[10px] text-[#666666]">7-day rolling activity</p>
+      <div className="h-56 sm:h-64">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={chartData}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#1e1e1e" />
+            <XAxis
+              dataKey="date"
+              tick={{ fontSize: 10, fill: "#888888" }}
+              tickFormatter={(d: string) => {
+                const dt = new Date(d);
+                return dt.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+              }}
+              interval="preserveStartEnd"
+              minTickGap={40}
+              stroke="#333333"
+            />
+            <YAxis
+              tick={{ fontSize: 10, fill: "#888888" }}
+              stroke="#333333"
+              allowDecimals={false}
+            />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: "#111111",
+                border: "1px solid #1e1e1e",
+                borderRadius: "4px",
+                fontSize: "12px",
+              }}
+              labelFormatter={(d: string) => {
+                const dt = new Date(d);
+                return dt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+              }}
+            />
+            <Legend wrapperStyle={{ fontSize: "11px", fontFamily: "JetBrains Mono" }} />
+            <Line
+              type="monotone"
+              dataKey="total"
+              name="Total"
+              stroke="#ffffff"
+              strokeWidth={2}
+              dot={false}
+            />
+            {platformKeys.map((key) => (
+              <Line
+                key={key}
+                type="monotone"
+                dataKey={key}
+                name={key.charAt(0).toUpperCase() + key.slice(1)}
+                stroke={PLATFORM_COLORS[key] || "#888888"}
+                strokeWidth={1.5}
+                dot={false}
+                strokeDasharray="4 2"
+              />
+            ))}
+          </LineChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );

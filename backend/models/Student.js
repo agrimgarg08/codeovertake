@@ -82,6 +82,12 @@ const studentSchema = new mongoose.Schema({
     yearWise: { type: Number, default: 0 },
     branchWise: { type: Number, default: 0 },
   },
+
+  heatmap: {
+    github: { type: Map, of: Number, default: () => new Map() },
+    leetcode: { type: Map, of: Number, default: () => new Map() },
+    codeforces: { type: Map, of: Number, default: () => new Map() },
+  },
 }, {
   timestamps: true,
 });

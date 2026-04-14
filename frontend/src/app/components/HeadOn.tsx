@@ -1,9 +1,55 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Link } from "react-router";
 import { Search, X, Plus, Trophy, Minus, Crown } from "lucide-react";
 import { searchStudents, fetchStudent, fetchHeatmap } from "../api";
 import { GithubIcon, LeetcodeIcon, CodeforcesIcon, CodechefIcon } from "./PlatformIcons";
 import { CombinedHeatmap } from "./Heatmap";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+
+const MOMENTUM_COLORS = ["#4ade80", "#60a5fa", "#f472b6", "#facc15", "#c084fc", "#fb923c"];
+
+/**
+ * Compute momentum: 7-day rolling sum of total activity across all platforms.
+ * Returns sorted array of { date, count } for the last ~365 days.
+ */
+function computeMomentum(
+  heatmap: Record<string, Record<string, number>> | undefined,
+  windowDays = 7
+): { date: string; value: number }[] {
+  if (!heatmap) return [];
+  // Merge all platforms into one date→count map
+  const merged: Record<string, number> = {};
+  for (const platformData of Object.values(heatmap)) {
+    for (const [date, count] of Object.entries(platformData)) {
+      merged[date] = (merged[date] || 0) + count;
+    }
+  }
+  const dates = Object.keys(merged).sort();
+  if (dates.length === 0) return [];
+
+  // Build full date range from first date to last date
+  const start = new Date(dates[0]);
+  const end = new Date(dates[dates.length - 1]);
+  const allDates: string[] = [];
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    allDates.push(d.toISOString().slice(0, 10));
+  }
+
+  // 7-day rolling sum
+  const result: { date: string; value: number }[] = [];
+  let windowSum = 0;
+  for (let i = 0; i < allDates.length; i++) {
+    windowSum += merged[allDates[i]] || 0;
+    if (i >= windowDays) {
+      windowSum -= merged[allDates[i - windowDays]] || 0;
+    }
+    // Only emit weekly data points to keep chart readable
+    if (i >= windowDays - 1 && i % 7 === 0) {
+      result.push({ date: allDates[i], value: windowSum });
+    }
+  }
+  return result;
+}
 
 const PLATFORM_CONFIGS = [
   {
@@ -151,6 +197,29 @@ export function HeadOn() {
   }
 
   const overallWinner = getWinner((s) => s.scores?.total ?? 0);
+
+  // Compute momentum data for the chart
+  const momentumChartData = useMemo(() => {
+    if (players.length < 2 || Object.keys(playerHeatmaps).length === 0) return [];
+    const perPlayer = players.map((p) => ({
+      rollno: p.rollno,
+      name: p.name.split(" ")[0],
+      data: computeMomentum(playerHeatmaps[p.rollno]),
+    }));
+    // Collect all unique dates across players
+    const allDates = new Set<string>();
+    for (const pd of perPlayer) for (const d of pd.data) allDates.add(d.date);
+    const sortedDates = [...allDates].sort();
+    // Build chart rows
+    return sortedDates.map((date) => {
+      const row: Record<string, any> = { date };
+      for (const pd of perPlayer) {
+        const entry = pd.data.find((d) => d.date === date);
+        row[pd.rollno] = entry?.value ?? null;
+      }
+      return row;
+    });
+  }, [players, playerHeatmaps]);
 
   return (
     <div className="mx-auto max-w-7xl px-3 py-6 sm:px-6 sm:py-8 lg:px-8">
@@ -405,6 +474,66 @@ export function HeadOn() {
               </div>
             );
           })}
+
+          {/* Momentum Chart */}
+          {momentumChartData.length > 0 && (
+            <div className="rounded border border-[#1e1e1e] bg-[#111111] p-4 sm:p-6">
+              <h2 className="mb-1 font-['JetBrains_Mono'] text-xs uppercase tracking-wider text-[#888888]">
+                Momentum
+              </h2>
+              <p className="mb-4 text-[10px] text-[#666666]">7-day rolling activity across all platforms</p>
+              <div className="h-64 sm:h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={momentumChartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1e1e1e" />
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fontSize: 10, fill: "#888888" }}
+                      tickFormatter={(d: string) => {
+                        const dt = new Date(d);
+                        return dt.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+                      }}
+                      interval="preserveStartEnd"
+                      minTickGap={40}
+                      stroke="#333333"
+                    />
+                    <YAxis
+                      tick={{ fontSize: 10, fill: "#888888" }}
+                      stroke="#333333"
+                      allowDecimals={false}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "#111111",
+                        border: "1px solid #1e1e1e",
+                        borderRadius: "4px",
+                        fontSize: "12px",
+                      }}
+                      labelFormatter={(d: string) => {
+                        const dt = new Date(d);
+                        return dt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+                      }}
+                    />
+                    <Legend
+                      wrapperStyle={{ fontSize: "11px", fontFamily: "JetBrains Mono" }}
+                    />
+                    {players.map((p, i) => (
+                      <Line
+                        key={p.rollno}
+                        type="monotone"
+                        dataKey={p.rollno}
+                        name={p.name.split(" ")[0]}
+                        stroke={MOMENTUM_COLORS[i % MOMENTUM_COLORS.length]}
+                        strokeWidth={2}
+                        dot={false}
+                        connectNulls
+                      />
+                    ))}
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
 
           {/* Activity Heatmaps Comparison */}
           {Object.keys(playerHeatmaps).length > 0 && (

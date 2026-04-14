@@ -112,15 +112,22 @@ async function registerStudent(data) {
     const fetchResults = await Promise.all(
       platforms.map(async (p) => {
         const username = student[p.key]?.username;
-        if (!username) return { key: p.key, stats: null };
-        return { key: p.key, stats: await p.fetchStats(username) };
+        if (!username) return { key: p.key, stats: null, heatmap: null };
+        const [stats, heatmap] = await Promise.all([
+          p.fetchStats(username),
+          typeof p.fetchHeatmap === 'function' ? p.fetchHeatmap(username).catch(() => null) : null,
+        ]);
+        return { key: p.key, stats, heatmap };
       }),
     );
 
-    for (const { key, stats } of fetchResults) {
+    for (const { key, stats, heatmap } of fetchResults) {
       if (stats) {
         student[key].stats = stats;
         student[key].lastUpdated = new Date();
+      }
+      if (heatmap) {
+        student.heatmap[key] = heatmap;
       }
       const platform = platforms.find((p) => p.key === key);
       student.scores[key] = platform.calculateScore(student[key].stats);
@@ -229,15 +236,22 @@ async function updateStudentUsernames(rollno, usernameData) {
     const fetchResults = await Promise.all(
       platforms.map(async (p) => {
         const username = student[p.key]?.username;
-        if (!username) return { key: p.key, stats: null };
-        return { key: p.key, stats: await p.fetchStats(username) };
+        if (!username) return { key: p.key, stats: null, heatmap: null };
+        const [stats, heatmap] = await Promise.all([
+          p.fetchStats(username),
+          typeof p.fetchHeatmap === 'function' ? p.fetchHeatmap(username).catch(() => null) : null,
+        ]);
+        return { key: p.key, stats, heatmap };
       }),
     );
 
-    for (const { key, stats } of fetchResults) {
+    for (const { key, stats, heatmap } of fetchResults) {
       if (stats) {
         student[key].stats = stats;
         student[key].lastUpdated = new Date();
+      }
+      if (heatmap) {
+        student.heatmap[key] = heatmap;
       }
       const platform = platforms.find((p) => p.key === key);
       student.scores[key] = platform.calculateScore(student[key].stats);

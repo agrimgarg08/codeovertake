@@ -65,8 +65,10 @@ async function updateAllStudents() {
   // Phase 1: Fetch all platform stats in parallel streams (each platform has its own concurrency)
   // Map: rollno -> { github: stats, leetcode: stats, ... }
   const statsMap = new Map();
+  const heatmapMap = new Map();
   for (const s of students) {
     statsMap.set(s.rollno, {});
+    heatmapMap.set(s.rollno, {});
   }
 
   console.log('[CRON] Fetching platform stats...');
@@ -90,6 +92,29 @@ async function updateAllStudents() {
 
   await Promise.all(platformPromises);
 
+  // Fetch heatmaps for platforms that support it (github, leetcode, codeforces)
+  console.log('[CRON] Fetching heatmaps...');
+  const heatmapPlatforms = platforms.filter((p) => typeof p.fetchHeatmap === 'function');
+  const heatmapPromises = heatmapPlatforms.map((platform) => {
+    const concurrency = PLATFORM_CONCURRENCY[platform.key] || 3;
+    const delay = PLATFORM_DELAY_MS[platform.key] || 0;
+
+    const tasks = students
+      .filter((s) => s[platform.key]?.username)
+      .map((student) => () =>
+        platform.fetchHeatmap(student[platform.key].username).then((data) => {
+          if (data) heatmapMap.get(student.rollno)[platform.key] = data;
+        }).catch((err) => {
+          console.error(`[CRON] ${platform.key} heatmap error for ${student.rollno}:`, err.message);
+        })
+      );
+
+    console.log(`[CRON]   ${platform.key} heatmap: ${tasks.length} users`);
+    return processQueue(tasks, concurrency, delay);
+  });
+
+  await Promise.all(heatmapPromises);
+
   const fetchElapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   console.log(`[CRON] All stats fetched in ${fetchElapsed}s`);
 
@@ -99,6 +124,7 @@ async function updateAllStudents() {
     const batch = students.slice(i, i + SAVE_BATCH_SIZE);
     const saveOps = batch.map(async (student) => {
       const fetched = statsMap.get(student.rollno);
+      const heatmaps = heatmapMap.get(student.rollno);
 
       for (const p of platforms) {
         const stats = fetched[p.key];
@@ -109,6 +135,13 @@ async function updateAllStudents() {
         student.scores[p.key] = p.calculateScore(student[p.key].stats);
       }
       student.scores.total = calculateTotalScore(student.scores);
+
+      // Save heatmap data
+      for (const key of ['github', 'leetcode', 'codeforces']) {
+        if (heatmaps[key]) {
+          student.heatmap[key] = heatmaps[key];
+        }
+      }
 
       await student.save();
 

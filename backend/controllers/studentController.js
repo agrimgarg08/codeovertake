@@ -1,6 +1,6 @@
 const studentService = require('../services/studentService');
 const { fetchNsutBranches, searchNsutStudents } = require('../utils/nsut');
-const { getPlatform } = require('../platforms');
+const { getPlatform, getAllPlatforms, calculateTotalScore } = require('../platforms');
 
 const getBranches = async (req, res) => {
   const branches = await fetchNsutBranches();
@@ -40,9 +40,48 @@ const registerStudent = async (req, res) => {
   res.status(201).json({ message: 'Student registered successfully', student });
 };
 
+/**
+ * Check if a platform's stats are empty (all zeros / defaults).
+ */
+function isStatsEmpty(stats) {
+  if (!stats) return true;
+  const obj = stats.toObject ? stats.toObject() : stats;
+  return Object.values(obj).every((v) => v === 0 || v === '' || v == null);
+}
+
 const getStudent = async (req, res) => {
   const student = await studentService.getStudentByRollNo(req.params.rollno);
   if (!student) return res.status(404).json({ error: 'Student not found' });
+
+  // Backfill: if any platform has a username but empty stats, fetch live
+  const platforms = getAllPlatforms();
+  const toFetch = platforms.filter(
+    (p) => student[p.key]?.username && isStatsEmpty(student[p.key]?.stats),
+  );
+
+  if (toFetch.length > 0) {
+    let dirty = false;
+    await Promise.all(
+      toFetch.map(async (p) => {
+        try {
+          const stats = await p.fetchStats(student[p.key].username);
+          if (stats) {
+            student[p.key].stats = stats;
+            student[p.key].lastUpdated = new Date();
+            student.scores[p.key] = p.calculateScore(stats);
+            dirty = true;
+          }
+        } catch (err) {
+          console.error(`[BACKFILL] ${p.key} stats error for ${student.rollno}:`, err.message);
+        }
+      }),
+    );
+    if (dirty) {
+      student.scores.total = calculateTotalScore(student.scores);
+      await student.save();
+    }
+  }
+
   res.json(student);
 };
 
@@ -80,19 +119,42 @@ const getHeatmap = async (req, res) => {
   const student = await studentService.getStudentByRollNo(req.params.rollno);
   if (!student) return res.status(404).json({ error: 'Student not found' });
 
-  const platformKeys = ['github', 'leetcode', 'codeforces'];
+  const heatmapKeys = ['github', 'leetcode', 'codeforces'];
   const results = {};
+  const toFetch = [];
 
-  await Promise.all(
-    platformKeys.map(async (key) => {
-      const username = student[key]?.username;
-      if (!username) return;
-      const platform = getPlatform(key);
-      if (!platform?.fetchHeatmap) return;
-      const data = await platform.fetchHeatmap(username);
-      if (data) results[key] = data;
-    }),
-  );
+  for (const key of heatmapKeys) {
+    const hasData = student.heatmap?.[key] && student.heatmap[key] instanceof Map && student.heatmap[key].size > 0;
+    if (hasData) {
+      results[key] = Object.fromEntries(student.heatmap[key]);
+    } else if (student[key]?.username) {
+      toFetch.push(key);
+    }
+  }
+
+  // Backfill missing heatmaps from live APIs
+  if (toFetch.length > 0) {
+    let dirty = false;
+    await Promise.all(
+      toFetch.map(async (key) => {
+        const platform = getPlatform(key);
+        if (!platform?.fetchHeatmap) return;
+        try {
+          const data = await platform.fetchHeatmap(student[key].username);
+          if (data && Object.keys(data).length > 0) {
+            results[key] = data;
+            student.heatmap[key] = data;
+            dirty = true;
+          }
+        } catch (err) {
+          console.error(`[BACKFILL] ${key} heatmap error for ${student.rollno}:`, err.message);
+        }
+      }),
+    );
+    if (dirty) {
+      await student.save();
+    }
+  }
 
   res.json(results);
 };
