@@ -513,7 +513,7 @@ export function Register() {
                   id="name"
                   type="text"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value.toUpperCase() })}
                   readOnly={autoFilled}
                   required
                   className="h-12 w-full rounded border border-[#1e1e1e] bg-[#111111] px-4 text-white outline-none transition-colors focus:border-[#333333] read-only:text-[#888888]"

@@ -101,7 +101,7 @@ async function registerStudent(data) {
 
   const student = await Student.create({
     rollno,
-    name,
+    name: name.toUpperCase(),
     branch: branch.toUpperCase(),
     year: parseInt(year),
     ...platformData,
