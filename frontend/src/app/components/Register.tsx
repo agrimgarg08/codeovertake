@@ -594,6 +594,7 @@ export function Register() {
                   Platform Usernames
                 </h2>
                 <p className="mt-1 text-sm text-[#666666]">Link platforms to boost your score • Paste URLs or usernames</p>
+                <p className="mt-1.5 text-xs text-yellow-500/80">⚠ Usernames cannot be deleted once added — only updated.</p>
               </div>
 
               {platforms.map((platform) => {
