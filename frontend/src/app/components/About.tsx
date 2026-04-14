@@ -21,7 +21,7 @@ export function About() {
         <div className="space-y-4 font-['Archivo'] text-sm leading-relaxed text-[#888888] sm:text-base">
           <p>
             CodeOvertake aggregates your coding profiles from GitHub, LeetCode, Codeforces, and CodeChef into a single score. 
-            It pulls your stats automatically and ranks you against other NSUT students — no manual tracking needed.
+            It pulls your stats automatically and ranks you against other NSUT students no manual tracking needed.
           </p>
           <p>
             Whether you're grinding DSA, contributing to open source, or competing in contests, every effort counts toward your score. 
@@ -60,7 +60,7 @@ export function About() {
                     { name: "Followers", max: "100", curve: "Exponential" },
                   ]},
                   { platform: "LeetCode", total: "1000", rows: [
-                    { name: "Problems Solved (Easy×1 + Med×2 + Hard×4)", max: "700", curve: "Exponential" },
+                    { name: "Problems Solved (Easy×1 + Med×3 + Hard×6)", max: "700", curve: "Exponential" },
                     { name: "Contest Rating", max: "300", curve: "Linear" },
                   ]},
                   { platform: "Codeforces", total: "1000", rows: [

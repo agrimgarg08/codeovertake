@@ -10,6 +10,9 @@ const adminRoutes = require('./routes/admin');
 
 const app = express();
 
+// Trust proxy (Cloudflare) – use X-Forwarded-For for rate limiting
+app.set('trust proxy', 1);
+
 // Security
 app.use(helmet());
 app.use(cors({
