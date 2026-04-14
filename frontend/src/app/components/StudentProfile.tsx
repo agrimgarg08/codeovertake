@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useParams, Navigate } from "react-router";
-import { ArrowLeft, ExternalLink, Edit3, X, Save, History, Clock, Share2, Plus, UserPlus, Trophy } from "lucide-react";
+import { ArrowLeft, Edit3, X, Save, History, Clock, Share2, Plus, UserPlus, Trophy } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { platforms, type Platform } from "../mockData";
 import { fetchStudent, fetchStudentHistory, updateUsernames as apiUpdateUsernames, restoreUsernames as apiRestoreUsernames, fetchHeatmap } from "../api";
@@ -43,10 +43,10 @@ export function StudentProfile() {
       .then((data) => {
         setStudent(data);
         setEditData({
-          github: data.github?.username || "",
-          leetcode: data.leetcode?.username || "",
-          codeforces: data.codeforces?.username || "",
-          codechef: data.codechef?.username || "",
+          github: "",
+          leetcode: "",
+          codeforces: "",
+          codechef: "",
         });
         // Calculate cooldown
         if (data.lastEditedAt) {
@@ -129,19 +129,6 @@ export function StudentProfile() {
     }
   };
 
-  const getPlatformUrl = (platform: Platform, username: string) => {
-    switch (platform) {
-      case "github":
-        return `https://github.com/${username}`;
-      case "leetcode":
-        return `https://leetcode.com/u/${username}`;
-      case "codeforces":
-        return `https://codeforces.com/profile/${username}`;
-      case "codechef":
-        return `https://www.codechef.com/users/${username}`;
-    }
-  };
-
   const getPlatformPrefix = (platform: Platform) => {
     switch (platform) {
       case "github":
@@ -195,10 +182,10 @@ export function StudentProfile() {
       const result = await apiRestoreUsernames(student.rollno, idx);
       setStudent(result.student);
       setEditData({
-        github: result.student.github?.username || "",
-        leetcode: result.student.leetcode?.username || "",
-        codeforces: result.student.codeforces?.username || "",
-        codechef: result.student.codechef?.username || "",
+        github: "",
+        leetcode: "",
+        codeforces: "",
+        codechef: "",
       });
       setShowHistory(false);
       setEditCooldown(24);
@@ -290,22 +277,19 @@ export function StudentProfile() {
                 {student.branch} • {student.year}
               </div>
             </div>
-            {/* Platform profile links */}
+            {/* Platform linked indicators */}
             <div className="mt-2 flex items-center gap-2 sm:mt-3 sm:gap-3">
               {platforms.map((platform) => {
-                const username = student[platform]?.username;
-                if (!username) return null;
+                const linked = student[platform]?.hasUsername;
+                if (!linked) return null;
                 return (
-                  <a
+                  <div
                     key={platform}
-                    href={getPlatformUrl(platform, username)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title={`${platform}: ${username}`}
-                    className="flex h-7 w-7 items-center justify-center rounded border border-[#1e1e1e] bg-[#111111] text-[#888888] transition-colors hover:border-[#333333] hover:text-white sm:h-8 sm:w-8"
+                    title={`${platform.charAt(0).toUpperCase() + platform.slice(1)} linked`}
+                    className="flex h-7 w-7 items-center justify-center rounded border border-[#1e1e1e] bg-[#111111] text-[#888888] sm:h-8 sm:w-8"
                   >
                     <span className="h-4 w-4">{getPlatformIcon(platform)}</span>
-                  </a>
+                  </div>
                 );
               })}
             </div>
@@ -354,7 +338,7 @@ export function StudentProfile() {
       <div className="mb-6 grid gap-3 sm:mb-8 sm:grid-cols-2 sm:gap-4">
         {platforms.map((platform, idx) => {
           const platformData = student[platform];
-          const hasData = platformData?.username;
+          const hasData = platformData?.hasUsername;
           const data = platformData?.stats;
           const score = student.scores?.[platform] ?? 0;
           const label = platform.charAt(0).toUpperCase() + platform.slice(1);
@@ -380,19 +364,9 @@ export function StudentProfile() {
 
               {hasData ? (
                 <div className="space-y-3">
-                  <a
-                    href={getPlatformUrl(platform, platformData.username)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group flex items-center gap-2 font-['JetBrains_Mono'] text-sm text-[#888888] transition-colors hover:text-white"
-                  >
-                    {platformData.username}
-                    <div
-                      className="h-3 w-3"
-                    >
-                      <ExternalLink className="h-3 w-3" />
-                    </div>
-                  </a>
+                  <div className="flex items-center gap-2 font-['JetBrains_Mono'] text-sm text-[#4ade80]">
+                    Linked
+                  </div>
 
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     {platform === "github" && data && (
@@ -553,11 +527,11 @@ export function StudentProfile() {
         {!isEditing ? (
           <div className="font-['JetBrains_Mono'] text-sm text-[#888888]">
             {platforms.map((platform, idx) => {
-              const username = student[platform]?.username;
+              const linked = student[platform]?.hasUsername;
               const label = platform.charAt(0).toUpperCase() + platform.slice(1);
               return (
                 <span key={platform}>
-                  {label}: {username || "—"}
+                  {label}: {linked ? "Linked" : "—"}
                   {idx < platforms.length - 1 && " | "}
                 </span>
               );
@@ -622,10 +596,10 @@ export function StudentProfile() {
                   setIsEditing(false);
                   setSaveError("");
                   setEditData({
-                    github: student?.github?.username || "",
-                    leetcode: student?.leetcode?.username || "",
-                    codeforces: student?.codeforces?.username || "",
-                    codechef: student?.codechef?.username || "",
+                    github: "",
+                    leetcode: "",
+                    codeforces: "",
+                    codechef: "",
                   });
                 }}
                 className="flex h-10 items-center gap-2 rounded border border-[#1e1e1e] px-4 text-sm text-[#888888] transition-colors hover:text-white"
@@ -643,7 +617,7 @@ export function StudentProfile() {
               className="mt-6 space-y-3 border-t border-[#1e1e1e] pt-6"
             >
               <div className="flex items-center justify-between">
-                <h4 className="font-['JetBrains_Mono'] text-sm text-[#888888]">Previous Usernames</h4>
+                <h4 className="font-['JetBrains_Mono'] text-sm text-[#888888]">Edit History</h4>
                 <span className="text-xs text-[#666666]">Last {student.usernameHistory.length} entries</span>
               </div>
               {student.usernameHistory.map((entry: any, idx: number) => (
@@ -651,7 +625,7 @@ export function StudentProfile() {
                   key={idx}
                   className="rounded border border-[#1e1e1e] bg-[#0a0a0a] p-4"
                 >
-                <div className="mb-2 flex items-center justify-between">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-xs text-[#666666]">
                     <Clock className="h-3 w-3" />
                     {entry.changedAt ? new Date(entry.changedAt).toLocaleString() : "—"}
@@ -664,21 +638,17 @@ export function StudentProfile() {
                     disabled={editCooldown !== null && editCooldown > 0}
                     className="text-xs text-[#888888] transition-colors hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    Use this
+                    Restore
                   </button>
                 </div>
-                <div className="font-['JetBrains_Mono'] text-xs text-[#888888]">
-                  {platforms.map((platform, pidx) => {
-                    const usernames = entry.usernames || {};
-                    const username = typeof usernames.get === "function" ? usernames.get(platform) : usernames[platform];
-                    const label = platform.charAt(0).toUpperCase() + platform.slice(1);
-                    return (
-                      <span key={platform}>
-                        {label}: {username || "—"}
-                        {pidx < platforms.length - 1 && " | "}
-                      </span>
-                    );
-                  })}
+                <div className="mt-2 font-['JetBrains_Mono'] text-xs text-[#888888]">
+                  {(entry.platforms || []).map((p: string, pidx: number) => (
+                    <span key={p}>
+                      {p.charAt(0).toUpperCase() + p.slice(1)}
+                      {pidx < (entry.platforms || []).length - 1 && ", "}
+                    </span>
+                  ))}
+                  {(entry.platforms || []).length > 0 ? " updated" : "No changes"}
                 </div>
               </div>
             ))}

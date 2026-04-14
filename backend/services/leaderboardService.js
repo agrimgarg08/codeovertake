@@ -9,7 +9,6 @@ const sortByMap = { total: 'scores.total' };
 const defaultSelectFields = ['rollno', 'name', 'branch', 'year', 'scores', 'ranks'];
 for (const p of platforms) {
   sortByMap[p.key] = `scores.${p.key}`;
-  defaultSelectFields.push(`${p.key}.username`);
 }
 
 /**

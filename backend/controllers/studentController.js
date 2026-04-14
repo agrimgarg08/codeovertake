@@ -2,6 +2,34 @@ const studentService = require('../services/studentService');
 const { fetchNsutBranches, searchNsutStudents } = require('../utils/nsut');
 const { getPlatform, getAllPlatforms, calculateTotalScore } = require('../platforms');
 
+const PLATFORM_KEYS = ['github', 'leetcode', 'codeforces', 'codechef'];
+
+/**
+ * Strip usernames from a student doc, replacing with hasUsername boolean.
+ */
+function stripUsernames(doc) {
+  const obj = doc.toObject ? doc.toObject() : { ...doc };
+  for (const key of PLATFORM_KEYS) {
+    if (obj[key]) {
+      obj[key].hasUsername = !!obj[key].username;
+      delete obj[key].username;
+    }
+  }
+  // Strip usernames from history too
+  if (obj.usernameHistory) {
+    obj.usernameHistory = obj.usernameHistory.map((entry) => ({
+      changedAt: entry.changedAt,
+      // Keep platform keys but mask values
+      platforms: entry.usernames ? Object.keys(
+        entry.usernames instanceof Map ? Object.fromEntries(entry.usernames) : entry.usernames
+      ) : [],
+    }));
+  }
+  // Strip heatmap from response (served via separate endpoint)
+  delete obj.heatmap;
+  return obj;
+}
+
 const getBranches = async (req, res) => {
   const branches = await fetchNsutBranches();
   if (!branches) return res.status(502).json({ error: 'Failed to fetch branches' });
@@ -37,7 +65,7 @@ const lookupStudent = async (req, res) => {
 
 const registerStudent = async (req, res) => {
   const student = await studentService.registerStudent(req.body);
-  res.status(201).json({ message: 'Student registered successfully', student });
+  res.status(201).json({ message: 'Student registered successfully', student: stripUsernames(student) });
 };
 
 /**
@@ -82,18 +110,18 @@ const getStudent = async (req, res) => {
     }
   }
 
-  res.json(student);
+  res.json(stripUsernames(student));
 };
 
 const updateUsernames = async (req, res) => {
   const student = await studentService.updateStudentUsernames(req.params.rollno, req.body);
-  res.json({ message: 'Usernames updated successfully', student });
+  res.json({ message: 'Usernames updated successfully', student: stripUsernames(student) });
 };
 
 const restoreUsernames = async (req, res) => {
   const index = parseInt(req.body.index);
   const student = await studentService.restoreUsernames(req.params.rollno, index);
-  res.json({ message: 'Usernames restored successfully', student });
+  res.json({ message: 'Usernames restored successfully', student: stripUsernames(student) });
 };
 
 const getHistory = async (req, res) => {

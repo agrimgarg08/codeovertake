@@ -383,7 +383,7 @@ export function HeadOn() {
 
           {/* Platform Sections */}
           {PLATFORM_CONFIGS.map((platform) => {
-            const hasAny = players.some((p) => p[platform.key]?.username);
+            const hasAny = players.some((p) => p[platform.key]?.hasUsername);
             if (!hasAny) return null;
             const platformWinner = getWinner((s) => s.scores?.[platform.key] ?? 0);
 
