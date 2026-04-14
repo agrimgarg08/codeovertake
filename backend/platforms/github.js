@@ -87,12 +87,51 @@ function calculateScore(stats) {
   return Math.min(1000, contribScore + repoScore + starScore + followerScore);
 }
 
+async function fetchHeatmap(username) {
+  if (!username || !process.env.GITHUB_TOKEN) return null;
+  try {
+    const query = `query($username: String!) {
+      user(login: $username) {
+        contributionsCollection {
+          contributionCalendar {
+            weeks {
+              contributionDays {
+                date
+                contributionCount
+              }
+            }
+          }
+        }
+      }
+    }`;
+    const res = await axios.post(
+      GITHUB_GRAPHQL,
+      { query, variables: { username } },
+      { headers: { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` }, timeout: 10000 }
+    );
+    const weeks = res.data?.data?.user?.contributionsCollection?.contributionCalendar?.weeks;
+    if (!weeks) return null;
+    const data = {};
+    for (const week of weeks) {
+      for (const day of week.contributionDays) {
+        if (day.contributionCount > 0) {
+          data[day.date] = day.contributionCount;
+        }
+      }
+    }
+    return data;
+  } catch {
+    return null;
+  }
+}
+
 module.exports = {
   key: 'github',
   label: 'GitHub',
   fetchStats,
   validateUsername,
   calculateScore,
+  fetchHeatmap,
   profileUrl: (username) => `https://github.com/${username}`,
   leaderboardFields: 'rollno name branch year scores.github github.username github.stats ranks',
   leaderboardHeaders: [

@@ -223,7 +223,34 @@ async function updateStudentUsernames(rollno, usernameData) {
 
   student.lastEditedAt = new Date();
   await student.save();
-  // Return fresh copy without password
+
+  // Fetch stats, calculate scores & rankings (same as registration)
+  try {
+    const fetchResults = await Promise.all(
+      platforms.map(async (p) => {
+        const username = student[p.key]?.username;
+        if (!username) return { key: p.key, stats: null };
+        return { key: p.key, stats: await p.fetchStats(username) };
+      }),
+    );
+
+    for (const { key, stats } of fetchResults) {
+      if (stats) {
+        student[key].stats = stats;
+        student[key].lastUpdated = new Date();
+      }
+      const platform = platforms.find((p) => p.key === key);
+      student.scores[key] = platform.calculateScore(student[key].stats);
+    }
+    student.scores.total = calculateTotalScore(student.scores);
+    await student.save();
+
+    const { calculateRankings } = require('./rankingService');
+    await calculateRankings();
+  } catch (err) {
+    console.error(`[UPDATE] Failed to fetch stats for ${student.rollno}:`, err.message);
+  }
+
   return Student.findOne({ rollno: student.rollno });
 }
 

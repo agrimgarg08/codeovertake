@@ -49,7 +49,7 @@ async function getLeaderboard({ year, branch, sortBy = 'total', order = 'desc', 
 /**
  * Get platform-specific leaderboard (only students with that platform linked).
  */
-async function getPlatformLeaderboard(platformKey, { year, branch, order = 'desc', page = 1, limit = 50, search } = {}) {
+async function getPlatformLeaderboard(platformKey, { year, branch, order = 'desc', sortBy, page = 1, limit = 50, search } = {}) {
   const platform = platforms.find((p) => p.key === platformKey);
   const filter = {};
   if (year) filter.year = parseInt(year);
@@ -64,7 +64,18 @@ async function getPlatformLeaderboard(platformKey, { year, branch, order = 'desc
     ];
   }
 
-  const sortField = platformKey === 'all' ? 'scores.total' : `scores.${platformKey}`;
+  // Allow sorting by individual stat fields (e.g. github.stats.publicRepos)
+  let sortField;
+  if (sortBy && platform) {
+    const validHeaders = platform.leaderboardHeaders.map((h) => h.statKey);
+    if (validHeaders.includes(sortBy)) {
+      sortField = sortBy;
+    } else {
+      sortField = `scores.${platformKey}`;
+    }
+  } else {
+    sortField = platformKey === 'all' ? 'scores.total' : `scores.${platformKey}`;
+  }
   const sortOrder = order === 'asc' ? 1 : -1;
   const skip = (Math.max(1, parseInt(page)) - 1) * parseInt(limit);
   const lim = Math.min(100, Math.max(1, parseInt(limit)));

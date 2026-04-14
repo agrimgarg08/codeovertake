@@ -84,4 +84,12 @@ router.get(
   asyncHandler(ctrl.getHistory),
 );
 
+// GET /api/students/:rollno/heatmap
+router.get(
+  '/:rollno/heatmap',
+  [param('rollno').trim().notEmpty()],
+  validate,
+  asyncHandler(ctrl.getHeatmap),
+);
+
 module.exports = router;

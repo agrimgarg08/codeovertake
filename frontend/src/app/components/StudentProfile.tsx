@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useParams, Navigate } from "react-router";
-import { ArrowLeft, ExternalLink, Edit3, X, Save, History, Clock, Share2, AlertTriangle, Plus, UserPlus } from "lucide-react";
+import { ArrowLeft, ExternalLink, Edit3, X, Save, History, Clock, Share2, Plus, UserPlus, Trophy } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { platforms, type Platform } from "../mockData";
-import { fetchStudent, fetchStudentHistory, updateUsernames as apiUpdateUsernames, restoreUsernames as apiRestoreUsernames } from "../api";
+import { fetchStudent, fetchStudentHistory, updateUsernames as apiUpdateUsernames, restoreUsernames as apiRestoreUsernames, fetchHeatmap } from "../api";
 import { GithubIcon, LeetcodeIcon, CodeforcesIcon, CodechefIcon } from "./PlatformIcons";
+import { Heatmap, CombinedHeatmap } from "./Heatmap";
 
 export function StudentProfile() {
   const { rollNo } = useParams<{ rollNo: string }>();
@@ -12,11 +13,13 @@ export function StudentProfile() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [scoreHistory, setScoreHistory] = useState<any[]>([]);
+  const [heatmapData, setHeatmapData] = useState<Record<string, Record<string, number>>>({});
   const [isEditing, setIsEditing] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [editCooldown, setEditCooldown] = useState<number | null>(null); // hours remaining
+  const [updateSuccess, setUpdateSuccess] = useState<{ name: string; ranks: any; scores: any } | null>(null);
   const [editData, setEditData] = useState({
     github: "",
     leetcode: "",
@@ -80,6 +83,14 @@ export function StudentProfile() {
       .catch(() => {});
   }, [rollNo]);
 
+  // Fetch heatmap data
+  useEffect(() => {
+    if (!rollNo) return;
+    fetchHeatmap(rollNo)
+      .then((data) => setHeatmapData(data))
+      .catch(() => {});
+  }, [rollNo]);
+
   if (loading) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-8 text-center text-[#888888]">
@@ -92,10 +103,7 @@ export function StudentProfile() {
     return <Navigate to="/" replace />;
   }
 
-  // Profile completeness
-  const linkedPlatforms = platforms.filter((p) => student[p]?.username).length;
-  const completeness = Math.round((linkedPlatforms / platforms.length) * 100);
-  const missingPlatforms = platforms.filter((p) => !student[p]?.username);
+
 
   const handleShare = () => {
     const url = window.location.href;
@@ -168,6 +176,11 @@ export function StudentProfile() {
       setIsEditing(false);
       // Set 24-hour cooldown
       setEditCooldown(24);
+      setUpdateSuccess({
+        name: result.student.name,
+        ranks: result.student.ranks,
+        scores: result.student.scores,
+      });
     } catch (err: any) {
       setSaveError(err.message || "Failed to save");
     }
@@ -194,6 +207,53 @@ export function StudentProfile() {
     }
   };
 
+  if (updateSuccess) {
+    return (
+      <div className="mx-auto max-w-2xl overflow-x-hidden px-3 py-10 sm:px-6 sm:py-16 lg:px-8">
+        <div className="space-y-6 text-center sm:space-y-8">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-[#1e1e1e] bg-[#111111] sm:h-20 sm:w-20">
+            <Trophy className="h-8 w-8 text-yellow-500 sm:h-10 sm:w-10" />
+          </div>
+          <div>
+            <h1 className="mb-2 font-['JetBrains_Mono'] text-2xl tracking-tight sm:text-3xl">Updated!</h1>
+            <p className="text-sm text-[#888888]">{updateSuccess.name}&apos;s scores have been recalculated</p>
+          </div>
+          <div className="grid grid-cols-3 gap-2 sm:gap-4">
+            <div className="rounded border border-[#1e1e1e] bg-[#111111] p-3 sm:p-4">
+              <div className="font-['JetBrains_Mono'] text-lg sm:text-2xl">#{updateSuccess.ranks?.overall ?? "??"}</div>
+              <div className="mt-0.5 text-[10px] text-[#888888] sm:mt-1 sm:text-xs">Overall Rank</div>
+            </div>
+            <div className="rounded border border-[#1e1e1e] bg-[#111111] p-3 sm:p-4">
+              <div className="font-['JetBrains_Mono'] text-lg sm:text-2xl">#{updateSuccess.ranks?.yearWise ?? "??"}</div>
+              <div className="mt-0.5 text-[10px] text-[#888888] sm:mt-1 sm:text-xs">Year Rank</div>
+            </div>
+            <div className="rounded border border-[#1e1e1e] bg-[#111111] p-3 sm:p-4">
+              <div className="font-['JetBrains_Mono'] text-lg sm:text-2xl">#{updateSuccess.ranks?.branchWise ?? "??"}</div>
+              <div className="mt-0.5 text-[10px] text-[#888888] sm:mt-1 sm:text-xs">Branch Rank</div>
+            </div>
+          </div>
+          <div className="font-['JetBrains_Mono'] text-sm text-[#888888]">
+            Total Score: <span className="text-lg text-[#4ade80]">{updateSuccess.scores?.total ?? 0}</span>
+          </div>
+          <div className="flex flex-col justify-center gap-3 sm:flex-row sm:gap-4">
+            <button
+              onClick={() => setUpdateSuccess(null)}
+              className="flex items-center justify-center gap-2 rounded bg-[#4ade80] px-6 py-2.5 font-['Archivo'] text-sm text-[#0a0a0a] transition-opacity hover:opacity-90"
+            >
+              Back to Profile
+            </button>
+            <Link
+              to="/"
+              className="flex items-center justify-center gap-2 rounded border border-[#1e1e1e] px-6 py-2.5 font-['Archivo'] text-sm text-[#888888] transition-colors hover:text-white"
+            >
+              See Leaderboard
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className="mx-auto max-w-6xl overflow-x-hidden px-3 py-6 sm:px-6 sm:py-8 lg:px-8"
@@ -210,34 +270,17 @@ export function StudentProfile() {
         </Link>
       </div>
 
-      {/* Profile Completeness Banner */}
-      {completeness < 100 && (
-        <div className="mb-4 flex flex-col gap-2 rounded border border-yellow-500/20 bg-yellow-500/5 px-4 py-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-          <div className="flex items-center gap-3 text-sm">
-            <AlertTriangle className="h-4 w-4 flex-shrink-0 text-yellow-500" />
-            <span className="text-yellow-200">
-              Profile is {completeness}% complete. Add missing platforms to boost your score.
-            </span>
-          </div>
-          <button
-            onClick={startEditing}
-            className="flex items-center gap-1.5 text-sm text-yellow-200 transition-opacity hover:opacity-80"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Add Now
-          </button>
-        </div>
-      )}
+
 
       {/* Profile Header Card */}
       <div
-        className="mb-6 flex flex-col gap-4 rounded border border-[#1a1a1a] bg-[#0a0a0a] p-4 sm:mb-8 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-6"
+        className="mb-6 flex flex-col gap-4 rounded border border-[#1e1e1e] bg-[#111111] p-4 sm:mb-8 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-6"
       >
         <div className="flex items-center gap-4 sm:gap-5">
           <img
             src={`https://api.dicebear.com/9.x/identicon/svg?seed=${encodeURIComponent(student.rollno)}`}
             alt={student.name}
-            className="h-12 w-12 flex-shrink-0 rounded border border-[#1a1a1a] sm:h-16 sm:w-16"
+            className="h-12 w-12 flex-shrink-0 rounded border border-[#1e1e1e] sm:h-16 sm:w-16"
           />
           <div className="min-w-0">
             <h1 className="mb-1 truncate font-['JetBrains_Mono'] text-xl tracking-tight sm:mb-2 sm:text-3xl">{student.name}</h1>
@@ -259,7 +302,7 @@ export function StudentProfile() {
                     target="_blank"
                     rel="noopener noreferrer"
                     title={`${platform}: ${username}`}
-                    className="flex h-7 w-7 items-center justify-center rounded border border-[#1a1a1a] bg-[#111111] text-[#888888] transition-colors hover:border-[#333333] hover:text-white sm:h-8 sm:w-8"
+                    className="flex h-7 w-7 items-center justify-center rounded border border-[#1e1e1e] bg-[#111111] text-[#888888] transition-colors hover:border-[#333333] hover:text-white sm:h-8 sm:w-8"
                   >
                     <span className="h-4 w-4">{getPlatformIcon(platform)}</span>
                   </a>
@@ -277,7 +320,7 @@ export function StudentProfile() {
           </div>
           <button
             onClick={handleShare}
-            className="inline-flex items-center gap-2 rounded border border-[#1a1a1a] bg-[#111111] px-3 py-1.5 text-xs text-[#888888] transition-colors hover:border-[#333333] hover:text-white sm:mt-3"
+            className="inline-flex items-center gap-2 rounded border border-[#1e1e1e] bg-[#111111] px-3 py-1.5 text-xs text-[#888888] transition-colors hover:border-[#333333] hover:text-white sm:mt-3"
           >
             <Share2 className="h-3 w-3" />
             Share Profile
@@ -288,19 +331,19 @@ export function StudentProfile() {
       {/* Rankings Row */}
       <div className="mb-6 grid grid-cols-3 gap-2 sm:mb-8 sm:gap-4">
         <div
-          className="rounded border border-[#1a1a1a] bg-[#0a0a0a] p-3 text-center transition-shadow hover:shadow-lg hover:shadow-white/5 sm:p-4"
+          className="rounded border border-[#1e1e1e] bg-[#111111] p-3 text-center transition-shadow hover:shadow-lg hover:shadow-white/5 sm:p-4"
         >
           <div className="mb-0.5 font-['JetBrains_Mono'] text-lg sm:mb-1 sm:text-2xl">#{student.ranks?.overall ?? "—"}</div>
           <div className="text-[10px] text-[#888888] sm:text-xs">Overall Rank</div>
         </div>
         <div
-          className="rounded border border-[#1a1a1a] bg-[#0a0a0a] p-3 text-center transition-shadow hover:shadow-lg hover:shadow-white/5 sm:p-4"
+          className="rounded border border-[#1e1e1e] bg-[#111111] p-3 text-center transition-shadow hover:shadow-lg hover:shadow-white/5 sm:p-4"
         >
           <div className="mb-0.5 font-['JetBrains_Mono'] text-lg sm:mb-1 sm:text-2xl">#{student.ranks?.yearWise ?? "—"}</div>
           <div className="text-[10px] text-[#888888] sm:text-xs">Year Rank</div>
         </div>
         <div
-          className="rounded border border-[#1a1a1a] bg-[#0a0a0a] p-3 text-center transition-shadow hover:shadow-lg hover:shadow-white/5 sm:p-4"
+          className="rounded border border-[#1e1e1e] bg-[#111111] p-3 text-center transition-shadow hover:shadow-lg hover:shadow-white/5 sm:p-4"
         >
           <div className="mb-0.5 font-['JetBrains_Mono'] text-lg sm:mb-1 sm:text-2xl">#{student.ranks?.branchWise ?? "—"}</div>
           <div className="text-[10px] text-[#888888] sm:text-xs">Branch Rank</div>
@@ -319,7 +362,7 @@ export function StudentProfile() {
           return (
             <div
               key={platform}
-              className="rounded border border-[#1a1a1a] bg-[#0a0a0a] p-4 transition-shadow hover:shadow-lg hover:shadow-white/5 sm:p-6"
+              className="rounded border border-[#1e1e1e] bg-[#111111] p-4 transition-shadow hover:shadow-lg hover:shadow-white/5 sm:p-6"
             >
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -470,7 +513,7 @@ export function StudentProfile() {
       {/* Edit Usernames Section */}
       <div
         ref={editSectionRef}
-        className="mb-6 rounded border border-[#1a1a1a] bg-[#0a0a0a] p-4 sm:mb-8 sm:p-6"
+        className="mb-6 rounded border border-[#1e1e1e] bg-[#111111] p-4 sm:mb-8 sm:p-6"
       >
         <div className="mb-4 flex items-center justify-between">
           <h3 className="font-['JetBrains_Mono'] text-lg">Platform Usernames</h3>
@@ -488,7 +531,7 @@ export function StudentProfile() {
               <div className="flex items-center gap-3">
                   {editCooldown !== null && editCooldown > 0 && (
                     <div
-                      className="flex items-center gap-1 rounded bg-[#1a1a1a] px-2 py-1 text-xs text-[#888888]"
+                      className="flex items-center gap-1 rounded bg-[#1e1e1e] px-2 py-1 text-xs text-[#888888]"
                     >
                       <Clock className="h-3 w-3" />
                       {editCooldown}h cooldown
@@ -522,7 +565,7 @@ export function StudentProfile() {
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="rounded border border-[#1a1a1a] bg-black p-3 text-xs text-[#888888]">
+            <div className="rounded border border-[#1e1e1e] bg-[#0a0a0a] p-3 text-xs text-[#888888]">
               <div className="flex items-center gap-2">
                 <Clock className="h-3 w-3" />
                 Changes trigger a 24-hour edit cooldown
@@ -555,7 +598,7 @@ export function StudentProfile() {
                         setEditData({ ...editData, [platform]: extracted });
                       }}
                       style={{ paddingLeft: `calc(12px + ${prefix.length}ch)` }}
-                      className="h-10 w-full rounded border border-[#1a1a1a] bg-black pr-3 font-['JetBrains_Mono'] text-xs text-white placeholder-[#555555] outline-none transition-all focus:border-[#333333] focus:shadow-lg focus:shadow-white/5"
+                      className="h-10 w-full rounded border border-[#1e1e1e] bg-[#0a0a0a] pr-3 font-['JetBrains_Mono'] text-xs text-white placeholder-[#555555] outline-none transition-all focus:border-[#333333] focus:shadow-lg focus:shadow-white/5"
                     />
                   </div>
                 </div>
@@ -569,7 +612,7 @@ export function StudentProfile() {
               <button
                 onClick={handleSave}
                 disabled={isSaving}
-                className="flex h-10 items-center gap-2 rounded bg-white px-4 text-sm text-black transition-opacity hover:opacity-90 disabled:opacity-50"
+                className="flex h-10 items-center gap-2 rounded bg-[#4ade80] px-4 text-sm text-[#0a0a0a] transition-opacity hover:opacity-90 disabled:opacity-50"
               >
                 <Save className="h-4 w-4" />
                 {isSaving ? "Saving..." : "Save"}
@@ -585,7 +628,7 @@ export function StudentProfile() {
                     codechef: student?.codechef?.username || "",
                   });
                 }}
-                className="flex h-10 items-center gap-2 rounded border border-[#1a1a1a] px-4 text-sm text-[#888888] transition-colors hover:text-white"
+                className="flex h-10 items-center gap-2 rounded border border-[#1e1e1e] px-4 text-sm text-[#888888] transition-colors hover:text-white"
               >
                 <X className="h-4 w-4" />
                 Cancel
@@ -597,7 +640,7 @@ export function StudentProfile() {
         {/* Username History */}
           {showHistory && student.usernameHistory && (
             <div
-              className="mt-6 space-y-3 border-t border-[#1a1a1a] pt-6"
+              className="mt-6 space-y-3 border-t border-[#1e1e1e] pt-6"
             >
               <div className="flex items-center justify-between">
                 <h4 className="font-['JetBrains_Mono'] text-sm text-[#888888]">Previous Usernames</h4>
@@ -606,14 +649,14 @@ export function StudentProfile() {
               {student.usernameHistory.map((entry: any, idx: number) => (
                 <div
                   key={idx}
-                  className="rounded border border-[#1a1a1a] bg-black p-4"
+                  className="rounded border border-[#1e1e1e] bg-[#0a0a0a] p-4"
                 >
                 <div className="mb-2 flex items-center justify-between">
                   <div className="flex items-center gap-2 text-xs text-[#666666]">
                     <Clock className="h-3 w-3" />
                     {entry.changedAt ? new Date(entry.changedAt).toLocaleString() : "—"}
                     {idx === 0 && student.usernameHistory.length > 1 && (
-                      <span className="ml-2 rounded bg-[#1a1a1a] px-2 py-0.5 text-[#888888]">(original)</span>
+                      <span className="ml-2 rounded bg-[#1e1e1e] px-2 py-0.5 text-[#888888]">(original)</span>
                     )}
                   </div>
                   <button
@@ -646,7 +689,7 @@ export function StudentProfile() {
       {/* Score History Chart */}
       {scoreHistory.length >= 1 && (
         <div
-          className="rounded border border-[#1a1a1a] bg-[#0a0a0a] p-6"
+          className="rounded border border-[#1e1e1e] bg-[#111111] p-6"
         >
           <h3 className="mb-6 font-['JetBrains_Mono'] text-lg">Score History (Last 30 Days)</h3>
           {scoreHistory.length === 1 ? (
@@ -658,7 +701,7 @@ export function StudentProfile() {
           ) : (
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={scoreHistory}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#1e1e1e" />
               <XAxis
                 dataKey="date"
                 stroke="#888888"
@@ -668,8 +711,8 @@ export function StudentProfile() {
               <YAxis stroke="#888888" style={{ fontSize: "12px", fontFamily: "JetBrains Mono" }} />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "#0a0a0a",
-                  border: "1px solid #1a1a1a",
+                  backgroundColor: "#111111",
+                  border: "1px solid #1e1e1e",
                   borderRadius: "4px",
                   fontFamily: "JetBrains Mono",
                   fontSize: "12px",
@@ -682,8 +725,8 @@ export function StudentProfile() {
                   fontSize: "12px",
                 }}
               />
-              <Line type="monotone" dataKey="total" stroke="#ffffff" strokeWidth={2} name="Total" />
-              <Line type="monotone" dataKey="github" stroke="#ffffff" strokeWidth={1.5} strokeOpacity={0.6} name="GitHub" />
+              <Line type="monotone" dataKey="total" stroke="#4ade80" strokeWidth={2} name="Total" />
+              <Line type="monotone" dataKey="github" stroke="#86efac" strokeWidth={1.5} strokeOpacity={0.6} name="GitHub" />
               <Line type="monotone" dataKey="leetcode" stroke="#ffa116" strokeWidth={1.5} name="LeetCode" />
               <Line type="monotone" dataKey="codeforces" stroke="#1f8acb" strokeWidth={1.5} name="Codeforces" />
               <Line type="monotone" dataKey="codechef" stroke="#5b4638" strokeWidth={1.5} name="CodeChef" />
@@ -693,8 +736,39 @@ export function StudentProfile() {
         </div>
       )}
 
+      {/* Activity Heatmaps */}
+      {Object.keys(heatmapData).length > 0 && (
+        <div className="mt-6 space-y-4 sm:mt-8">
+          <h3 className="font-['JetBrains_Mono'] text-lg">Activity</h3>
+
+          {/* Combined heatmap */}
+          <div className="rounded border border-[#1e1e1e] bg-[#111111] p-4 sm:p-6">
+            <CombinedHeatmap platformData={heatmapData} />
+          </div>
+
+          {/* Per-platform heatmaps */}
+          <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-3">
+            {heatmapData.github && (
+              <div className="rounded border border-[#1e1e1e] bg-[#111111] p-3 sm:p-4">
+                <Heatmap data={heatmapData.github} label="GitHub" compact color="#4ade80" />
+              </div>
+            )}
+            {heatmapData.leetcode && (
+              <div className="rounded border border-[#1e1e1e] bg-[#111111] p-3 sm:p-4">
+                <Heatmap data={heatmapData.leetcode} label="LeetCode" compact color="#ffa116" />
+              </div>
+            )}
+            {heatmapData.codeforces && (
+              <div className="rounded border border-[#1e1e1e] bg-[#111111] p-3 sm:p-4">
+                <Heatmap data={heatmapData.codeforces} label="Codeforces" compact color="#1f8acb" />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Social / Viral Section */}
-      <div className="mt-6 flex flex-col gap-3 rounded border border-[#1a1a1a] bg-[#0a0a0a] p-4 sm:mt-8 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-5">
+      <div className="mt-6 flex flex-col gap-3 rounded border border-[#1e1e1e] bg-[#111111] p-4 sm:mt-8 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-5">
         <div className="space-y-1">
           <div className="text-sm">Challenge your friends</div>
           <div className="text-xs text-[#666666]">Know someone missing? Add them to the leaderboard.</div>
@@ -702,14 +776,14 @@ export function StudentProfile() {
         <div className="flex items-center gap-3">
           <Link
             to="/register"
-            className="flex items-center gap-2 rounded border border-[#1a1a1a] px-4 py-2 text-xs text-[#888888] transition-colors hover:border-[#333333] hover:text-white"
+            className="flex items-center gap-2 rounded border border-[#1e1e1e] px-4 py-2 text-xs text-[#888888] transition-colors hover:border-[#333333] hover:text-white"
           >
             <UserPlus className="h-3.5 w-3.5" />
             Add Someone
           </Link>
           <button
             onClick={handleShare}
-            className="flex items-center gap-2 rounded bg-white px-4 py-2 text-xs text-black transition-opacity hover:opacity-90"
+            className="flex items-center gap-2 rounded bg-[#4ade80] px-4 py-2 text-xs text-[#0a0a0a] transition-opacity hover:opacity-90"
           >
             <Share2 className="h-3.5 w-3.5" />
             Share Profile

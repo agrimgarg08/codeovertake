@@ -251,7 +251,7 @@ export function Register() {
     return (
       <div className="mx-auto max-w-2xl overflow-x-hidden px-3 py-10 sm:px-6 sm:py-16 lg:px-8">
         <div className="space-y-6 text-center sm:space-y-8">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-[#1a1a1a] bg-[#0a0a0a] sm:h-20 sm:w-20">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-[#1e1e1e] bg-[#111111] sm:h-20 sm:w-20">
             <Trophy className="h-8 w-8 text-yellow-500 sm:h-10 sm:w-10" />
           </div>
           <div>
@@ -259,32 +259,32 @@ export function Register() {
             <p className="text-sm text-[#888888]">{successData.name} is now on the leaderboard</p>
           </div>
           <div className="grid grid-cols-3 gap-2 sm:gap-4">
-            <div className="rounded border border-[#1a1a1a] bg-[#0a0a0a] p-3 sm:p-4">
+            <div className="rounded border border-[#1e1e1e] bg-[#111111] p-3 sm:p-4">
               <div className="font-['JetBrains_Mono'] text-lg sm:text-2xl">#{successData.ranks?.overall ?? "??"}</div>
               <div className="mt-0.5 text-[10px] text-[#888888] sm:mt-1 sm:text-xs">Overall Rank</div>
             </div>
-            <div className="rounded border border-[#1a1a1a] bg-[#0a0a0a] p-3 sm:p-4">
+            <div className="rounded border border-[#1e1e1e] bg-[#111111] p-3 sm:p-4">
               <div className="font-['JetBrains_Mono'] text-lg sm:text-2xl">#{successData.ranks?.yearWise ?? "??"}</div>
               <div className="mt-0.5 text-[10px] text-[#888888] sm:mt-1 sm:text-xs">Year Rank</div>
             </div>
-            <div className="rounded border border-[#1a1a1a] bg-[#0a0a0a] p-3 sm:p-4">
+            <div className="rounded border border-[#1e1e1e] bg-[#111111] p-3 sm:p-4">
               <div className="font-['JetBrains_Mono'] text-lg sm:text-2xl">#{successData.ranks?.branchWise ?? "??"}</div>
               <div className="mt-0.5 text-[10px] text-[#888888] sm:mt-1 sm:text-xs">Branch Rank</div>
             </div>
           </div>
           <div className="font-['JetBrains_Mono'] text-sm text-[#888888]">
-            Total Score: <span className="text-white text-lg">{successData.scores?.total ?? 0}</span>
+            Total Score: <span className="text-[#4ade80] text-lg">{successData.scores?.total ?? 0}</span>
           </div>
           <div className="flex flex-col justify-center gap-3 sm:flex-row sm:gap-4">
             <Link
               to={`/student/${successData.rollno}`}
-              className="flex items-center gap-2 rounded bg-white px-6 py-2.5 font-['Archivo'] text-sm text-black transition-opacity hover:opacity-90"
+              className="flex items-center gap-2 rounded bg-[#4ade80] px-6 py-2.5 font-['Archivo'] text-sm text-[#0a0a0a] transition-opacity hover:opacity-90"
             >
               View Full Profile
             </Link>
             <Link
               to="/"
-              className="flex items-center gap-2 rounded border border-[#1a1a1a] px-6 py-2.5 font-['Archivo'] text-sm text-[#888888] transition-colors hover:text-white"
+              className="flex items-center gap-2 rounded border border-[#1e1e1e] px-6 py-2.5 font-['Archivo'] text-sm text-[#888888] transition-colors hover:text-white"
             >
               See Leaderboard
             </Link>
@@ -314,7 +314,7 @@ export function Register() {
                   placeholder="e.g. Arjun Mehta or 2022UIT3042"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-12 w-full rounded border border-[#1a1a1a] bg-[#0a0a0a] pl-10 pr-4 text-white placeholder-[#888888] outline-none transition-colors focus:border-[#333333]"
+                  className="h-12 w-full rounded border border-[#1e1e1e] bg-[#111111] pl-10 pr-4 text-white placeholder-[#888888] outline-none transition-colors focus:border-[#333333]"
                 />
               </div>
             </div>
@@ -323,7 +323,7 @@ export function Register() {
             {searchQuery ? (
               <div className="space-y-3">
                 {isSearching ? (
-                  <div className="rounded border border-[#1a1a1a] bg-[#0a0a0a] p-4 text-center text-sm text-[#888888]">
+                  <div className="rounded border border-[#1e1e1e] bg-[#111111] p-4 text-center text-sm text-[#888888]">
                     Searching...
                   </div>
                 ) : searchResults.length > 0 ? (
@@ -331,7 +331,7 @@ export function Register() {
                     <button
                       key={result.rollNo}
                       onClick={() => handleSelectStudent(result)}
-                      className="flex w-full items-center justify-between rounded border border-[#1a1a1a] bg-[#0a0a0a] p-4 text-left transition-all hover:border-[#333333] hover:bg-[#0f0f0f]"
+                      className="flex w-full items-center justify-between rounded border border-[#1e1e1e] bg-[#111111] p-4 text-left transition-all hover:border-[#333333] hover:bg-[#0f0f0f]"
                     >
                       <div>
                         <div className="font-['Archivo']">{result.name}</div>
@@ -360,21 +360,21 @@ export function Register() {
                   ))
                 ) : (
                   <div className="space-y-3">
-                    <div className="rounded border border-[#1a1a1a] bg-[#0a0a0a] p-4 text-center text-sm text-[#888888]">
+                    <div className="rounded border border-[#1e1e1e] bg-[#111111] p-4 text-center text-sm text-[#888888]">
                       You&apos;re not on the leaderboard yet.
                     </div>
                     <div className="flex gap-3">
                       {/^\d{4}[A-Z]{3}\d{4}$/i.test(searchQuery) && (
                         <button
                           onClick={handleTryAsRollNumber}
-                          className="flex-1 rounded border border-[#1a1a1a] bg-[#0a0a0a] px-4 py-2 text-sm transition-colors hover:bg-[#0f0f0f]"
+                          className="flex-1 rounded border border-[#1e1e1e] bg-[#111111] px-4 py-2 text-sm transition-colors hover:bg-[#0f0f0f]"
                         >
                           Use This Roll Number
                         </button>
                       )}
                       <button
                         onClick={handleEnterManually}
-                        className="flex-1 rounded border border-[#1a1a1a] bg-[#0a0a0a] px-4 py-2 text-sm transition-colors hover:bg-[#0f0f0f]"
+                        className="flex-1 rounded border border-[#1e1e1e] bg-[#111111] px-4 py-2 text-sm transition-colors hover:bg-[#0f0f0f]"
                       >
                         Add Yourself Manually
                       </button>
@@ -386,25 +386,25 @@ export function Register() {
               /* Empty state content */
               <div className="space-y-8">
                 {/* How it works */}
-                <div className="rounded border border-[#1a1a1a] bg-[#0a0a0a] p-6">
+                <div className="rounded border border-[#1e1e1e] bg-[#111111] p-6">
                   <h2 className="mb-4 font-['JetBrains_Mono'] text-sm uppercase tracking-wider text-[#888888]">How it works</h2>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <div className="flex items-start gap-3">
-                      <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded bg-[#1a1a1a] font-['JetBrains_Mono'] text-sm text-[#888888]">1</div>
+                      <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded bg-[#1e1e1e] font-['JetBrains_Mono'] text-sm text-[#888888]">1</div>
                       <div>
                         <div className="text-sm font-medium">Search</div>
                         <div className="mt-0.5 text-xs text-[#666666]">Find yourself by name or roll number</div>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
-                      <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded bg-[#1a1a1a] font-['JetBrains_Mono'] text-sm text-[#888888]">2</div>
+                      <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded bg-[#1e1e1e] font-['JetBrains_Mono'] text-sm text-[#888888]">2</div>
                       <div>
                         <div className="text-sm font-medium">Link Profiles</div>
                         <div className="mt-0.5 text-xs text-[#666666]">Add your coding platform usernames</div>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
-                      <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded bg-[#1a1a1a] font-['JetBrains_Mono'] text-sm text-[#888888]">3</div>
+                      <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded bg-[#1e1e1e] font-['JetBrains_Mono'] text-sm text-[#888888]">3</div>
                       <div>
                         <div className="text-sm font-medium">Compete</div>
                         <div className="mt-0.5 text-xs text-[#666666]">Track your rank on the leaderboard</div>
@@ -423,7 +423,7 @@ export function Register() {
                       { icon: <CodeforcesIcon />, name: "Codeforces", desc: "Rating" },
                       { icon: <CodechefIcon />, name: "CodeChef", desc: "Rating" },
                     ].map((p) => (
-                      <div key={p.name} className="flex items-center gap-3 rounded border border-[#1a1a1a] bg-[#0a0a0a] p-3">
+                      <div key={p.name} className="flex items-center gap-3 rounded border border-[#1e1e1e] bg-[#111111] p-3">
                         <span className="h-5 w-5 flex-shrink-0">{p.icon}</span>
                         <div>
                           <div className="text-sm">{p.name}</div>
@@ -452,7 +452,7 @@ export function Register() {
 
           {/* Roll Number Display */}
           {formData.rollNo && (
-            <div className="mb-6 flex items-center gap-4 rounded border border-[#1a1a1a] bg-[#0a0a0a] p-4">
+            <div className="mb-6 flex items-center gap-4 rounded border border-[#1e1e1e] bg-[#111111] p-4">
               <div className="flex-1">
                 <div className="text-xs text-[#888888]">Roll Number</div>
                 <div className="font-['JetBrains_Mono'] text-lg">{formData.rollNo}</div>
@@ -491,7 +491,7 @@ export function Register() {
                     value={formData.rollNo}
                     onChange={(e) => setFormData({ ...formData, rollNo: e.target.value.toUpperCase() })}
                     required
-                    className="h-12 w-full rounded border border-[#1a1a1a] bg-[#0a0a0a] px-4 font-['JetBrains_Mono'] text-white outline-none transition-colors focus:border-[#333333]"
+                    className="h-12 w-full rounded border border-[#1e1e1e] bg-[#111111] px-4 font-['JetBrains_Mono'] text-white outline-none transition-colors focus:border-[#333333]"
                   />
                 </div>
               )}
@@ -507,7 +507,7 @@ export function Register() {
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   readOnly={autoFilled}
                   required
-                  className="h-12 w-full rounded border border-[#1a1a1a] bg-[#0a0a0a] px-4 text-white outline-none transition-colors focus:border-[#333333] read-only:text-[#888888]"
+                  className="h-12 w-full rounded border border-[#1e1e1e] bg-[#111111] px-4 text-white outline-none transition-colors focus:border-[#333333] read-only:text-[#888888]"
                 />
               </div>
 
@@ -523,7 +523,7 @@ export function Register() {
                     onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
                     readOnly={autoFilled}
                     required
-                    className="h-12 w-full rounded border border-[#1a1a1a] bg-[#0a0a0a] px-4 text-white outline-none transition-colors focus:border-[#333333] read-only:text-[#888888]"
+                    className="h-12 w-full rounded border border-[#1e1e1e] bg-[#111111] px-4 text-white outline-none transition-colors focus:border-[#333333] read-only:text-[#888888]"
                   />
                 </div>
                 <div>
@@ -537,7 +537,7 @@ export function Register() {
                     onChange={(e) => setFormData({ ...formData, year: e.target.value })}
                     readOnly={autoFilled}
                     required
-                    className="h-12 w-full rounded border border-[#1a1a1a] bg-[#0a0a0a] px-4 text-white outline-none transition-colors focus:border-[#333333] read-only:text-[#888888]"
+                    className="h-12 w-full rounded border border-[#1e1e1e] bg-[#111111] px-4 text-white outline-none transition-colors focus:border-[#333333] read-only:text-[#888888]"
                   />
                 </div>
               </div>
@@ -588,7 +588,7 @@ export function Register() {
                             ? "border-[#ff4444] bg-[#ff4444]/5"
                             : validationStatus === "valid"
                             ? "border-[#4ade80]/40 bg-[#4ade80]/5"
-                            : "border-[#1a1a1a] bg-[#0a0a0a] focus:border-[#333333]"
+                            : "border-[#1e1e1e] bg-[#111111] focus:border-[#333333]"
                         }`}
                       />
                     </div>
@@ -660,7 +660,7 @@ export function Register() {
             <button
               type="submit"
               disabled={isSubmitting || hasInvalidPlatform}
-              className="h-12 w-full rounded bg-white font-['Archivo'] text-sm font-medium text-black transition-opacity hover:opacity-90 disabled:opacity-50"
+              className="h-12 w-full rounded bg-[#4ade80] font-['Archivo'] text-sm font-medium text-[#0a0a0a] transition-opacity hover:opacity-90 disabled:opacity-50"
             >
               {isSubmitting ? (
                 <span className="flex items-center justify-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Calculating your rank...</span>

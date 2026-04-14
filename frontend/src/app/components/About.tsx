@@ -41,10 +41,10 @@ export function About() {
           </p>
 
           {/* Scoring Table */}
-          <div className="overflow-hidden rounded-lg border border-[#1a1a1a]">
+          <div className="overflow-hidden rounded-lg border border-[#1e1e1e]">
             <table className="w-full text-left text-xs sm:text-sm">
               <thead>
-                <tr className="border-b border-[#1a1a1a] bg-[#0a0a0a]">
+                <tr className="border-b border-[#1e1e1e] bg-[#111111]">
                   <th className="px-4 py-3 font-['JetBrains_Mono'] text-xs font-medium text-[#666666]">Platform</th>
                   <th className="px-4 py-3 font-['JetBrains_Mono'] text-xs font-medium text-[#666666]">Component</th>
                   <th className="hidden px-4 py-3 text-right font-['JetBrains_Mono'] text-xs font-medium text-[#666666] sm:table-cell">Max</th>
@@ -75,7 +75,7 @@ export function About() {
                   ]},
                 ].map((group) => (
                   group.rows.map((row, i) => (
-                    <tr key={`${group.platform}-${i}`} className="transition-colors hover:bg-[#0a0a0a]">
+                    <tr key={`${group.platform}-${i}`} className="transition-colors hover:bg-[#111111]">
                       <td className="px-4 py-2.5 font-['JetBrains_Mono']">
                         {i === 0 ? (
                           <span className="text-white">{group.platform} <span className="text-[#666666]">/ {group.total}</span></span>
@@ -87,7 +87,7 @@ export function About() {
                       <td className="hidden px-4 py-2.5 text-right font-['JetBrains_Mono'] text-white sm:table-cell">{row.max}</td>
                       <td className="hidden px-4 py-2.5 sm:table-cell">
                         <span className={`inline-block rounded px-1.5 py-0.5 font-['JetBrains_Mono'] text-[10px] ${
-                          row.curve === "Exponential" ? "bg-[#1a1a1a] text-[#4ade80]" : "bg-[#1a1a1a] text-[#60a5fa]"
+                          row.curve === "Exponential" ? "bg-[#1e1e1e] text-[#4ade80]" : "bg-[#1e1e1e] text-[#60a5fa]"
                         }`}>{row.curve}</span>
                       </td>
                     </tr>
@@ -99,11 +99,11 @@ export function About() {
 
           <div className="flex flex-col gap-2 text-xs text-[#666666] sm:flex-row sm:items-start sm:gap-6">
             <div className="flex items-center gap-2">
-              <span className="inline-block rounded bg-[#1a1a1a] px-1.5 py-0.5 font-['JetBrains_Mono'] text-[10px] text-[#4ade80]">Exponential</span>
+              <span className="inline-block rounded bg-[#1e1e1e] px-1.5 py-0.5 font-['JetBrains_Mono'] text-[10px] text-[#4ade80]">Exponential</span>
               <span>Early effort has the biggest impact, with diminishing returns</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="inline-block rounded bg-[#1a1a1a] px-1.5 py-0.5 font-['JetBrains_Mono'] text-[10px] text-[#60a5fa]">Linear</span>
+              <span className="inline-block rounded bg-[#1e1e1e] px-1.5 py-0.5 font-['JetBrains_Mono'] text-[10px] text-[#60a5fa]">Linear</span>
               <span>Score scales proportionally with rating</span>
             </div>
           </div>
@@ -123,15 +123,15 @@ export function About() {
             CodeOvertake computes three separate rankings:
           </p>
           <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-lg border border-[#1a1a1a] bg-[#0a0a0a] p-4">
+            <div className="rounded-lg border border-[#1e1e1e] bg-[#111111] p-4">
               <div className="mb-2 font-['JetBrains_Mono'] text-xs text-[#4ade80]">Overall</div>
               <p className="text-xs text-[#666666]">Ranked against every registered student. Your global position at NSUT.</p>
             </div>
-            <div className="rounded-lg border border-[#1a1a1a] bg-[#0a0a0a] p-4">
+            <div className="rounded-lg border border-[#1e1e1e] bg-[#111111] p-4">
               <div className="mb-2 font-['JetBrains_Mono'] text-xs text-[#4ade80]">Year-wise</div>
               <p className="text-xs text-[#666666]">Ranked within your batch (e.g. 2028). See how you compare to your batchmates.</p>
             </div>
-            <div className="rounded-lg border border-[#1a1a1a] bg-[#0a0a0a] p-4">
+            <div className="rounded-lg border border-[#1e1e1e] bg-[#111111] p-4">
               <div className="mb-2 font-['JetBrains_Mono'] text-xs text-[#4ade80]">Branch-wise</div>
               <p className="text-xs text-[#666666]">Ranked within your year + branch combo (e.g. 2028 CSAI). The most competitive view.</p>
             </div>
@@ -141,19 +141,19 @@ export function About() {
       </section>
 
       {/* Divider */}
-      <div className="my-14 border-t border-[#1a1a1a]" />
+      <div className="my-14 border-t border-[#1e1e1e]" />
 
       {/* Contact / Built by */}
       <section className="mb-14">
         <h2 className="mb-6 font-['JetBrains_Mono'] text-lg tracking-tight sm:text-xl">Contact</h2>
-        <div className="rounded-lg border border-[#1a1a1a] bg-[#0a0a0a] p-6 sm:p-8">
+        <div className="rounded-lg border border-[#1e1e1e] bg-[#111111] p-6 sm:p-8">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-10">
             {/* Avatar */}
             <div className="flex-shrink-0">
               <img
                 src="https://api.dicebear.com/9.x/initials/svg?seed=SC&backgroundColor=1a1a1a&textColor=ffffff"
                 alt="Sujal Chaudhary"
-                className="h-20 w-20 rounded-full border border-[#1a1a1a]"
+                className="h-20 w-20 rounded-full border border-[#1e1e1e]"
               />
             </div>
 
@@ -173,7 +173,7 @@ export function About() {
                   href="https://sujal.info"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-md border border-[#1a1a1a] px-3 py-2 font-['Archivo'] text-xs text-[#888888] transition-colors hover:border-[#333333] hover:text-white"
+                  className="inline-flex items-center gap-2 rounded-md border border-[#1e1e1e] px-3 py-2 font-['Archivo'] text-xs text-[#888888] transition-colors hover:border-[#333333] hover:text-white"
                 >
                   <Globe className="h-3.5 w-3.5" /> Portfolio
                 </a>
@@ -181,7 +181,7 @@ export function About() {
                   href="https://sujal.info/linkedin"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-md border border-[#1a1a1a] px-3 py-2 font-['Archivo'] text-xs text-[#888888] transition-colors hover:border-[#333333] hover:text-white"
+                  className="inline-flex items-center gap-2 rounded-md border border-[#1e1e1e] px-3 py-2 font-['Archivo'] text-xs text-[#888888] transition-colors hover:border-[#333333] hover:text-white"
                 >
                   <Linkedin className="h-3.5 w-3.5" /> LinkedIn
                 </a>
@@ -189,13 +189,13 @@ export function About() {
                   href="https://sujal.info/github"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-md border border-[#1a1a1a] px-3 py-2 font-['Archivo'] text-xs text-[#888888] transition-colors hover:border-[#333333] hover:text-white"
+                  className="inline-flex items-center gap-2 rounded-md border border-[#1e1e1e] px-3 py-2 font-['Archivo'] text-xs text-[#888888] transition-colors hover:border-[#333333] hover:text-white"
                 >
                   <Github className="h-3.5 w-3.5" /> GitHub
                 </a>
                 <a
                   href="mailto:sujal@sujal.info"
-                  className="inline-flex items-center gap-2 rounded-md border border-[#1a1a1a] px-3 py-2 font-['Archivo'] text-xs text-[#888888] transition-colors hover:border-[#333333] hover:text-white"
+                  className="inline-flex items-center gap-2 rounded-md border border-[#1e1e1e] px-3 py-2 font-['Archivo'] text-xs text-[#888888] transition-colors hover:border-[#333333] hover:text-white"
                 >
                   <Mail className="h-3.5 w-3.5" /> Email
                 </a>
@@ -209,10 +209,10 @@ export function About() {
       <div className="text-center">
         <p className="mb-4 font-['Archivo'] text-sm text-[#666666]">Ready to see where you stand?</p>
         <div className="flex items-center justify-center gap-3">
-          <Link to="/" className="rounded-md border border-[#1a1a1a] px-5 py-2.5 font-['JetBrains_Mono'] text-xs transition-colors hover:border-[#333333] hover:text-white">
+          <Link to="/" className="rounded-md border border-[#1e1e1e] px-5 py-2.5 font-['JetBrains_Mono'] text-xs transition-colors hover:border-[#333333] hover:text-white">
             View Leaderboard
           </Link>
-          <Link to="/register" className="rounded-md bg-white px-5 py-2.5 font-['JetBrains_Mono'] text-xs text-black transition-opacity hover:opacity-80">
+          <Link to="/register" className="rounded-md bg-[#4ade80] px-5 py-2.5 font-['JetBrains_Mono'] text-xs text-[#0a0a0a] transition-opacity hover:opacity-80">
             Claim Your Spot
           </Link>
         </div>

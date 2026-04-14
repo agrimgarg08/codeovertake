@@ -59,12 +59,34 @@ function calculateScore(stats) {
   return Math.min(1000, solvedScore + ratingScore + maxRatingScore);
 }
 
+async function fetchHeatmap(username) {
+  if (!username) return null;
+  try {
+    const res = await axios.get(`${CF_API}/user.status`, {
+      params: { handle: username, from: 1, count: 10000 }, timeout: 15000,
+    });
+    if (res.data.status !== 'OK') return null;
+    const data = {};
+    for (const sub of res.data.result) {
+      if (sub.verdict === 'OK') {
+        const d = new Date(sub.creationTimeSeconds * 1000);
+        const key = d.toISOString().split('T')[0];
+        data[key] = (data[key] || 0) + 1;
+      }
+    }
+    return data;
+  } catch {
+    return null;
+  }
+}
+
 module.exports = {
   key: 'codeforces',
   label: 'Codeforces',
   fetchStats,
   validateUsername,
   calculateScore,
+  fetchHeatmap,
   profileUrl: (username) => `https://codeforces.com/profile/${username}`,
   leaderboardFields: 'rollno name branch year scores.codeforces codeforces.username codeforces.stats ranks',
   leaderboardHeaders: [

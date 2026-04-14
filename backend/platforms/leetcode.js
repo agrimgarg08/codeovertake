@@ -73,12 +73,43 @@ function calculateScore(stats) {
   return Math.min(1000, solvedScore + contestScore);
 }
 
+async function fetchHeatmap(username) {
+  if (!username) return null;
+  try {
+    const query = `query($username: String!) {
+      matchedUser(username: $username) {
+        submissionCalendar
+      }
+    }`;
+    const res = await axios.post(
+      LEETCODE_GRAPHQL,
+      { query, variables: { username } },
+      { headers: { 'Content-Type': 'application/json' }, timeout: 15000 }
+    );
+    const calendar = res.data?.data?.matchedUser?.submissionCalendar;
+    if (!calendar) return null;
+    const parsed = JSON.parse(calendar);
+    const data = {};
+    for (const [ts, count] of Object.entries(parsed)) {
+      if (count > 0) {
+        const d = new Date(parseInt(ts) * 1000);
+        const key = d.toISOString().split('T')[0];
+        data[key] = count;
+      }
+    }
+    return data;
+  } catch {
+    return null;
+  }
+}
+
 module.exports = {
   key: 'leetcode',
   label: 'LeetCode',
   fetchStats,
   validateUsername,
   calculateScore,
+  fetchHeatmap,
   profileUrl: (username) => `https://leetcode.com/u/${username}`,
   leaderboardFields: 'rollno name branch year scores.leetcode leetcode.username leetcode.stats ranks',
   leaderboardHeaders: [

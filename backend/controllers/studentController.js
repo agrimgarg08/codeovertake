@@ -76,6 +76,27 @@ const validateUsername = async (req, res) => {
   res.json({ valid: true, stats });
 };
 
+const getHeatmap = async (req, res) => {
+  const student = await studentService.getStudentByRollNo(req.params.rollno);
+  if (!student) return res.status(404).json({ error: 'Student not found' });
+
+  const platformKeys = ['github', 'leetcode', 'codeforces'];
+  const results = {};
+
+  await Promise.all(
+    platformKeys.map(async (key) => {
+      const username = student[key]?.username;
+      if (!username) return;
+      const platform = getPlatform(key);
+      if (!platform?.fetchHeatmap) return;
+      const data = await platform.fetchHeatmap(username);
+      if (data) results[key] = data;
+    }),
+  );
+
+  res.json(results);
+};
+
 module.exports = {
   getBranches,
   searchStudents,
@@ -86,4 +107,5 @@ module.exports = {
   restoreUsernames,
   getHistory,
   validateUsername,
+  getHeatmap,
 };

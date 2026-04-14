@@ -1,11 +1,40 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router";
-import { Search, Rocket, Zap, TrendingUp, ArrowUpRight, Loader2 } from "lucide-react";
+import { Search, Rocket, Zap, TrendingUp, ArrowUpRight, Loader2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { platforms, type Platform } from "../mockData";
 import { fetchLeaderboard, fetchPlatformLeaderboard, fetchFilters, fetchTopGainers } from "../api";
 import { GithubIcon, LeetcodeIcon, CodeforcesIcon, CodechefIcon } from "./PlatformIcons";
 
 const ITEMS_PER_PAGE = 20;
+
+// Platform stat columns for sorting
+const platformColumns: Record<string, { label: string; statKey: string; getValue: (s: any) => any }[]> = {
+  github: [
+    { label: "Repos", statKey: "github.stats.publicRepos", getValue: (s) => s.github?.stats?.publicRepos ?? 0 },
+    { label: "Stars", statKey: "github.stats.totalStars", getValue: (s) => s.github?.stats?.totalStars ?? 0 },
+    { label: "Followers", statKey: "github.stats.followers", getValue: (s) => s.github?.stats?.followers ?? 0 },
+    { label: "Contributions", statKey: "github.stats.contributions", getValue: (s) => s.github?.stats?.contributions ?? 0 },
+  ],
+  leetcode: [
+    { label: "Easy", statKey: "leetcode.stats.easySolved", getValue: (s) => s.leetcode?.stats?.easySolved ?? 0 },
+    { label: "Medium", statKey: "leetcode.stats.mediumSolved", getValue: (s) => s.leetcode?.stats?.mediumSolved ?? 0 },
+    { label: "Hard", statKey: "leetcode.stats.hardSolved", getValue: (s) => s.leetcode?.stats?.hardSolved ?? 0 },
+    { label: "Total", statKey: "leetcode.stats.totalSolved", getValue: (s) => s.leetcode?.stats?.totalSolved ?? 0 },
+    { label: "Contest", statKey: "leetcode.stats.contestRating", getValue: (s) => s.leetcode?.stats?.contestRating ?? 0 },
+  ],
+  codeforces: [
+    { label: "Rating", statKey: "codeforces.stats.rating", getValue: (s) => s.codeforces?.stats?.rating ?? 0 },
+    { label: "Max Rating", statKey: "codeforces.stats.maxRating", getValue: (s) => s.codeforces?.stats?.maxRating ?? 0 },
+    { label: "Rank", statKey: "codeforces.stats.rank", getValue: (s) => s.codeforces?.stats?.rank ?? "—" },
+    { label: "Solved", statKey: "codeforces.stats.problemsSolved", getValue: (s) => s.codeforces?.stats?.problemsSolved ?? 0 },
+  ],
+  codechef: [
+    { label: "Rating", statKey: "codechef.stats.currentRating", getValue: (s) => s.codechef?.stats?.currentRating ?? 0 },
+    { label: "Max Rating", statKey: "codechef.stats.highestRating", getValue: (s) => s.codechef?.stats?.highestRating ?? 0 },
+    { label: "Stars", statKey: "codechef.stats.stars", getValue: (s) => s.codechef?.stats?.stars ?? 0 },
+    { label: "Solved", statKey: "codechef.stats.totalProblemsSolved", getValue: (s) => s.codechef?.stats?.totalProblemsSolved ?? 0 },
+  ],
+};
 
 type TabType = "all" | Platform;
 
@@ -30,6 +59,8 @@ export function Leaderboard() {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const [topGainers, setTopGainers] = useState<any[]>([]);
   const [gainersPeriod, setGainersPeriod] = useState<{ from: string; to: string } | null>(null);
+  const [sortBy, setSortBy] = useState<string | undefined>(undefined);
+  const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
 
   // Load filter options and top gainers once
   useEffect(() => {
@@ -58,6 +89,8 @@ export function Leaderboard() {
       if (selectedYear !== "all") params.year = selectedYear;
       if (selectedBranch !== "all") params.branch = selectedBranch;
       if (searchQuery) params.search = searchQuery;
+      if (sortBy) params.sortBy = sortBy;
+      if (sortOrder) params.order = sortOrder;
 
       let result;
       if (activeTab === "all") {
@@ -86,13 +119,19 @@ export function Leaderboard() {
     setInitialLoad(false);
     setFading(false);
     setLoadingMore(false);
-  }, [activeTab, searchQuery, selectedYear, selectedBranch, currentPage]);
+  }, [activeTab, searchQuery, selectedYear, selectedBranch, currentPage, sortBy, sortOrder]);
 
   // Initial load and filter changes — reset to page 1
   useEffect(() => {
     setCurrentPage(1);
     loadData(false);
-  }, [activeTab, searchQuery, selectedYear, selectedBranch]);
+  }, [activeTab, searchQuery, selectedYear, selectedBranch, sortBy, sortOrder]);
+
+  // Reset sort when tab changes
+  useEffect(() => {
+    setSortBy(undefined);
+    setSortOrder("desc");
+  }, [activeTab]);
 
   // Load more when page increments
   useEffect(() => {
@@ -132,10 +171,41 @@ export function Leaderboard() {
     }
   };
 
+  const handleSort = (statKey: string) => {
+    if (sortBy === statKey) {
+      // Toggle order, or clear sort if already ascending
+      if (sortOrder === "desc") {
+        setSortOrder("asc");
+      } else {
+        setSortBy(undefined);
+        setSortOrder("desc");
+      }
+    } else {
+      setSortBy(statKey);
+      setSortOrder("desc");
+    }
+  };
+
+  const SortHeader = ({ label, statKey }: { label: string; statKey: string }) => (
+    <th
+      className="cursor-pointer select-none px-4 py-3 text-xs font-medium uppercase tracking-wider text-[#888888] transition-colors hover:text-white"
+      onClick={() => handleSort(statKey)}
+    >
+      <div className="flex items-center gap-1">
+        {label}
+        {sortBy === statKey ? (
+          sortOrder === "desc" ? <ArrowDown className="h-3 w-3 text-[#4ade80]" /> : <ArrowUp className="h-3 w-3 text-[#4ade80]" />
+        ) : (
+          <ArrowUpDown className="h-3 w-3 opacity-40" />
+        )}
+      </div>
+    </th>
+  );
+
   return (
     <div className="mx-auto max-w-7xl px-3 py-6 sm:px-6 sm:py-8 lg:px-8">
       {/* Global CTA Banner */}
-      <div className="mb-4 flex flex-col gap-3 rounded border border-[#1a1a1a] bg-[#0a0a0a] px-4 py-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+      <div className="mb-4 flex flex-col gap-3 rounded border border-[#1e1e1e] bg-[#111111] px-4 py-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between sm:px-5">
         <div className="flex items-center gap-3 text-sm">
           <Rocket className="hidden h-4 w-4 flex-shrink-0 text-[#888888] sm:block" />
           <span className="text-[#888888]">
@@ -145,7 +215,7 @@ export function Leaderboard() {
         </div>
         <Link
           to="/register"
-          className="flex w-full items-center justify-center gap-2 rounded bg-white px-4 py-1.5 font-['Archivo'] text-sm text-black transition-opacity hover:opacity-90 sm:w-auto"
+          className="flex w-full items-center justify-center gap-2 rounded bg-[#4ade80] px-4 py-1.5 font-['Archivo'] text-sm text-[#0a0a0a] transition-opacity hover:opacity-90 sm:w-auto"
         >
           <Zap className="h-3.5 w-3.5" />
           Claim Your Spot
@@ -169,9 +239,9 @@ export function Leaderboard() {
               <Link
                 key={g.rollno}
                 to={`/student/${g.rollno}`}
-                className="flex items-center gap-3 rounded border border-[#1a1a1a] bg-[#0a0a0a] p-3 transition-colors hover:border-[#333333]"
+                className="flex items-center gap-3 rounded border border-[#1e1e1e] bg-[#111111] p-3 transition-colors hover:border-[#333333]"
               >
-                <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded bg-[#1a1a1a] font-['JetBrains_Mono'] text-xs text-[#888888]">
+                <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded bg-[#1e1e1e] font-['JetBrains_Mono'] text-xs text-[#888888]">
                   {i + 1}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -194,12 +264,12 @@ export function Leaderboard() {
       </h1>
 
       {/* Platform Tabs */}
-      <div className="no-scrollbar -mx-3 mb-6 flex gap-1 overflow-x-auto border-b border-[#1a1a1a] px-3 font-['Archivo'] sm:mx-0 sm:px-0">
+      <div className="no-scrollbar -mx-3 mb-6 flex gap-1 overflow-x-auto border-b border-[#1e1e1e] px-3 font-['Archivo'] sm:mx-0 sm:px-0">
         <button
           onClick={() => setActiveTab("all")}
           className={`relative flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-3 text-sm transition-colors ${
             activeTab === "all"
-              ? "border-white text-white"
+              ? "border-[#4ade80] text-[#4ade80]"
               : "border-transparent text-[#888888] hover:text-white"
           }`}
         >
@@ -211,7 +281,7 @@ export function Leaderboard() {
             onClick={() => setActiveTab(platform)}
             className={`relative flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-3 text-sm transition-colors ${
               activeTab === platform
-                ? "border-white text-white"
+                ? "border-[#4ade80] text-[#4ade80]"
                 : "border-transparent text-[#888888] hover:text-white"
             }`}
           >
@@ -231,7 +301,7 @@ export function Leaderboard() {
             placeholder="Search by name or roll no..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-10 w-full rounded border border-[#1a1a1a] bg-[#0a0a0a] pl-10 pr-4 text-sm text-white placeholder-[#888888] outline-none transition-colors focus:border-[#333333]"
+            className="h-10 w-full rounded border border-[#1e1e1e] bg-[#111111] pl-10 pr-4 text-sm text-white placeholder-[#888888] outline-none transition-colors focus:border-[#333333]"
           />
         </div>
 
@@ -240,7 +310,7 @@ export function Leaderboard() {
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(e.target.value === "all" ? "all" : Number(e.target.value))}
-            className="h-10 rounded border border-[#1a1a1a] bg-[#0a0a0a] px-3 text-sm text-white outline-none transition-colors focus:border-[#333333] sm:px-4"
+            className="h-10 rounded border border-[#1e1e1e] bg-[#111111] px-3 text-sm text-white outline-none transition-colors focus:border-[#333333] sm:px-4"
           >
             <option value="all">All Years</option>
             {filterYears.map((year) => (
@@ -254,7 +324,7 @@ export function Leaderboard() {
           <select
             value={selectedBranch}
             onChange={(e) => setSelectedBranch(e.target.value)}
-            className="h-10 rounded border border-[#1a1a1a] bg-[#0a0a0a] px-3 text-sm text-white outline-none transition-colors focus:border-[#333333] sm:px-4"
+            className="h-10 rounded border border-[#1e1e1e] bg-[#111111] px-3 text-sm text-white outline-none transition-colors focus:border-[#333333] sm:px-4"
           >
             <option value="all">All Branches</option>
             {filterBranches.map((branch) => (
@@ -266,17 +336,49 @@ export function Leaderboard() {
         </div>
       </div>
 
+      {/* Sort Buttons (platform tabs only) */}
+      {activeTab !== "all" && platformColumns[activeTab] && (
+        <div className="no-scrollbar -mx-3 mb-4 flex gap-2 overflow-x-auto px-3 sm:mx-0 sm:mb-6 sm:flex-wrap sm:px-0">
+          <button
+            onClick={() => { setSortBy(undefined); setSortOrder("desc"); }}
+            className={`flex-shrink-0 rounded-full border px-3 py-1.5 font-['JetBrains_Mono'] text-xs transition-colors ${
+              !sortBy
+                ? "border-[#4ade80] bg-[#4ade80] text-[#0a0a0a]"
+                : "border-[#1e1e1e] text-[#888888] hover:border-[#333333] hover:text-white"
+            }`}
+          >
+            Score
+          </button>
+          {platformColumns[activeTab].map((col) => (
+            <button
+              key={col.statKey}
+              onClick={() => handleSort(col.statKey)}
+              className={`flex items-center gap-1 flex-shrink-0 rounded-full border px-3 py-1.5 font-['JetBrains_Mono'] text-xs transition-colors ${
+                sortBy === col.statKey
+                  ? "border-[#4ade80] bg-[#4ade80] text-[#0a0a0a]"
+                  : "border-[#1e1e1e] text-[#888888] hover:border-[#333333] hover:text-white"
+              }`}
+            >
+              {col.label}
+              {sortBy === col.statKey && (
+                sortOrder === "desc" ? <ArrowDown className="h-3 w-3" /> : <ArrowUp className="h-3 w-3" />
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Mobile Card View */}
       <div className={`space-y-3 sm:hidden transition-opacity duration-200 ${fading ? "opacity-40" : "opacity-100"}`}>
         {initialLoad ? (
-          <div className="rounded border border-[#1a1a1a] bg-[#0a0a0a] p-8 text-center text-[#888888]">Loading...</div>
+          <div className="rounded border border-[#1e1e1e] bg-[#111111] p-8 text-center text-[#888888]">Loading...</div>
         ) : students.length === 0 ? (
-          <div className="rounded border border-[#1a1a1a] bg-[#0a0a0a] p-8 text-center">
+          <div className="rounded border border-[#1e1e1e] bg-[#111111] p-8 text-center">
             <div className="text-[#888888]">No students found</div>
             {searchQuery && (
               <div className="mt-3">
                 <div className="mb-2 text-sm text-[#666666]">You&apos;re not on the leaderboard yet.</div>
-                <Link to="/register" className="inline-flex items-center gap-2 rounded bg-white px-4 py-2 text-sm text-black">
+                <Link to="/register" className="inline-flex items-center gap-2 rounded bg-[#4ade80] px-4 py-2 text-sm text-[#0a0a0a]">
                   <Zap className="h-3.5 w-3.5" /> Claim Your Spot
                 </Link>
               </div>
@@ -289,11 +391,11 @@ export function Leaderboard() {
               <Link
                 key={`${student.rollno}-${idx}`}
                 to={`/student/${student.rollno}`}
-                className="block rounded border border-[#1a1a1a] bg-[#0a0a0a] p-4 transition-colors hover:border-[#333333]"
+                className="block rounded border border-[#1e1e1e] bg-[#111111] p-4 transition-colors hover:border-[#333333]"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-3">
-                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded bg-[#1a1a1a] font-['JetBrains_Mono'] text-sm text-[#888888]">
+                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded bg-[#1e1e1e] font-['JetBrains_Mono'] text-sm text-[#888888]">
                       {rank}
                     </div>
                     <div>
@@ -303,14 +405,14 @@ export function Leaderboard() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="font-['JetBrains_Mono'] text-lg text-white">
+                    <div className="font-['JetBrains_Mono'] text-lg text-[#4ade80]">
                       {displayTab === "all" ? (student.scores?.total ?? 0) : (student.scores?.[displayTab] ?? 0)}
                     </div>
                     <div className="text-[10px] text-[#666666]">{displayTab === "all" ? "Total" : "Score"}</div>
                   </div>
                 </div>
                 {displayTab === "all" && (
-                  <div className="mt-3 grid grid-cols-4 gap-2 border-t border-[#1a1a1a] pt-3">
+                  <div className="mt-3 grid grid-cols-4 gap-2 border-t border-[#1e1e1e] pt-3">
                     {platforms.map((p) => (
                       <div key={p} className="text-center">
                         <div className="mx-auto mb-1 h-3.5 w-3.5 text-[#888888]">{getPlatformIcon(p)}</div>
@@ -320,7 +422,7 @@ export function Leaderboard() {
                   </div>
                 )}
                 {displayTab === "github" && student.github?.stats && (
-                  <div className="mt-3 grid grid-cols-4 gap-2 border-t border-[#1a1a1a] pt-3 text-center text-xs">
+                  <div className="mt-3 grid grid-cols-4 gap-2 border-t border-[#1e1e1e] pt-3 text-center text-xs">
                     <div><div className="text-[#666666]">Repos</div><div className="font-['JetBrains_Mono']">{student.github.stats.publicRepos ?? 0}</div></div>
                     <div><div className="text-[#666666]">Stars</div><div className="font-['JetBrains_Mono']">{student.github.stats.totalStars ?? 0}</div></div>
                     <div><div className="text-[#666666]">Followers</div><div className="font-['JetBrains_Mono']">{student.github.stats.followers ?? 0}</div></div>
@@ -328,7 +430,7 @@ export function Leaderboard() {
                   </div>
                 )}
                 {displayTab === "leetcode" && student.leetcode?.stats && (
-                  <div className="mt-3 grid grid-cols-5 gap-2 border-t border-[#1a1a1a] pt-3 text-center text-xs">
+                  <div className="mt-3 grid grid-cols-5 gap-2 border-t border-[#1e1e1e] pt-3 text-center text-xs">
                     <div><div className="text-[#666666]">Easy</div><div className="font-['JetBrains_Mono']">{student.leetcode.stats.easySolved ?? 0}</div></div>
                     <div><div className="text-[#666666]">Med</div><div className="font-['JetBrains_Mono']">{student.leetcode.stats.mediumSolved ?? 0}</div></div>
                     <div><div className="text-[#666666]">Hard</div><div className="font-['JetBrains_Mono']">{student.leetcode.stats.hardSolved ?? 0}</div></div>
@@ -337,7 +439,7 @@ export function Leaderboard() {
                   </div>
                 )}
                 {displayTab === "codeforces" && student.codeforces?.stats && (
-                  <div className="mt-3 grid grid-cols-4 gap-2 border-t border-[#1a1a1a] pt-3 text-center text-xs">
+                  <div className="mt-3 grid grid-cols-4 gap-2 border-t border-[#1e1e1e] pt-3 text-center text-xs">
                     <div><div className="text-[#666666]">Rating</div><div className="font-['JetBrains_Mono']">{student.codeforces.stats.rating ?? 0}</div></div>
                     <div><div className="text-[#666666]">Max</div><div className="font-['JetBrains_Mono']">{student.codeforces.stats.maxRating ?? 0}</div></div>
                     <div><div className="text-[#666666]">Rank</div><div className="font-['JetBrains_Mono'] truncate">{student.codeforces.stats.rank ?? "—"}</div></div>
@@ -345,7 +447,7 @@ export function Leaderboard() {
                   </div>
                 )}
                 {displayTab === "codechef" && student.codechef?.stats && (
-                  <div className="mt-3 grid grid-cols-4 gap-2 border-t border-[#1a1a1a] pt-3 text-center text-xs">
+                  <div className="mt-3 grid grid-cols-4 gap-2 border-t border-[#1e1e1e] pt-3 text-center text-xs">
                     <div><div className="text-[#666666]">Rating</div><div className="font-['JetBrains_Mono']">{student.codechef.stats.currentRating ?? 0}</div></div>
                     <div><div className="text-[#666666]">Max</div><div className="font-['JetBrains_Mono']">{student.codechef.stats.highestRating ?? 0}</div></div>
                     <div><div className="text-[#666666]">Stars</div><div className="font-['JetBrains_Mono']">{student.codechef.stats.stars ?? 0}★</div></div>
@@ -360,10 +462,10 @@ export function Leaderboard() {
 
       {/* Desktop Data Table */}
       <div
-        className={`hidden overflow-x-auto overflow-y-visible rounded border border-[#1a1a1a] transition-opacity duration-200 sm:block ${fading ? "opacity-40" : "opacity-100"}`}
+        className={`hidden overflow-x-auto overflow-y-visible rounded border border-[#1e1e1e] transition-opacity duration-200 sm:block ${fading ? "opacity-40" : "opacity-100"}`}
       >
         <table className="w-full text-left text-sm">
-          <thead className="border-b border-[#1a1a1a] bg-[#0a0a0a] font-['JetBrains_Mono']">
+          <thead className="border-b border-[#1e1e1e] bg-[#111111] font-['JetBrains_Mono']">
             {displayTab === "all" ? (
               <tr>
                 <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-[#888888]">#</th>
@@ -384,44 +486,14 @@ export function Leaderboard() {
                 <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-[#888888]">Roll No</th>
                 <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-[#888888]">Branch</th>
                 <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-[#888888]">Year</th>
-                {displayTab === "github" && (
-                  <>
-                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-[#888888]">Repos</th>
-                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-[#888888]">Stars</th>
-                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-[#888888]">Followers</th>
-                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-[#888888]">Contributions</th>
-                  </>
-                )}
-                {displayTab === "leetcode" && (
-                  <>
-                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-[#888888]">Easy</th>
-                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-[#888888]">Medium</th>
-                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-[#888888]">Hard</th>
-                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-[#888888]">Total</th>
-                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-[#888888]">Contest</th>
-                  </>
-                )}
-                {displayTab === "codeforces" && (
-                  <>
-                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-[#888888]">Rating</th>
-                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-[#888888]">Max Rating</th>
-                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-[#888888]">Rank</th>
-                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-[#888888]">Solved</th>
-                  </>
-                )}
-                {displayTab === "codechef" && (
-                  <>
-                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-[#888888]">Rating</th>
-                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-[#888888]">Max Rating</th>
-                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-[#888888]">Stars</th>
-                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-[#888888]">Solved</th>
-                  </>
-                )}
-                <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-[#888888]">Score</th>
+                {platformColumns[displayTab]?.map((col) => (
+                  <SortHeader key={col.statKey} label={col.label} statKey={col.statKey} />
+                ))}
+                <SortHeader label="Score" statKey={`scores.${displayTab}`} />
               </tr>
             )}
           </thead>
-          <tbody className="divide-y divide-[#1a1a1a] font-['Archivo']">
+          <tbody className="divide-y divide-[#1e1e1e] font-['Archivo']">
             {initialLoad ? (
               <tr>
                 <td colSpan={10} className="px-4 py-8 text-center text-[#888888]">
@@ -438,7 +510,7 @@ export function Leaderboard() {
                         <div className="mb-2 text-sm text-[#666666]">You&apos;re not on the leaderboard yet.</div>
                         <Link
                           to="/register"
-                          className="inline-flex items-center gap-2 rounded bg-white px-4 py-2 text-sm text-black transition-opacity hover:opacity-90"
+                          className="inline-flex items-center gap-2 rounded bg-[#4ade80] px-4 py-2 text-sm text-[#0a0a0a] transition-opacity hover:opacity-90"
                         >
                           <Zap className="h-3.5 w-3.5" />
                           Claim Your Spot
@@ -452,7 +524,7 @@ export function Leaderboard() {
               students.map((student, idx) => {
                 const rank = idx + 1;
                 return (
-                  <tr key={`${student.rollno}-${idx}`} className="transition-colors hover:bg-[#0a0a0a]">
+                  <tr key={`${student.rollno}-${idx}`} className="transition-colors hover:bg-[#111111]">
                     <td className="px-4 py-3 font-['JetBrains_Mono'] text-[#888888]">{rank}</td>
                     <td className="max-w-[250px] px-4 py-3">
                       <Link
@@ -480,40 +552,24 @@ export function Leaderboard() {
                         <td className="px-4 py-3 font-['JetBrains_Mono']">
                           {student.scores?.codechef ?? "—"}
                         </td>
-                        <td className="px-4 py-3 font-['JetBrains_Mono'] text-white">{student.scores?.total ?? 0}</td>
+                        <td className="px-4 py-3 font-['JetBrains_Mono'] text-[#4ade80]">{student.scores?.total ?? 0}</td>
                       </>
-                    ) : displayTab === "github" && student.github ? (
+                    ) : platformColumns[displayTab] ? (
                       <>
-                        <td className="px-4 py-3 font-['JetBrains_Mono']">{student.github.stats?.publicRepos ?? 0}</td>
-                        <td className="px-4 py-3 font-['JetBrains_Mono']">{student.github.stats?.totalStars ?? 0}</td>
-                        <td className="px-4 py-3 font-['JetBrains_Mono']">{student.github.stats?.followers ?? 0}</td>
-                        <td className="px-4 py-3 font-['JetBrains_Mono']">{student.github.stats?.contributions ?? 0}</td>
-                        <td className="px-4 py-3 font-['JetBrains_Mono'] text-white">{student.scores?.github ?? 0}</td>
-                      </>
-                    ) : displayTab === "leetcode" && student.leetcode ? (
-                      <>
-                        <td className="px-4 py-3 font-['JetBrains_Mono']">{student.leetcode.stats?.easySolved ?? 0}</td>
-                        <td className="px-4 py-3 font-['JetBrains_Mono']">{student.leetcode.stats?.mediumSolved ?? 0}</td>
-                        <td className="px-4 py-3 font-['JetBrains_Mono']">{student.leetcode.stats?.hardSolved ?? 0}</td>
-                        <td className="px-4 py-3 font-['JetBrains_Mono']">{student.leetcode.stats?.totalSolved ?? 0}</td>
-                        <td className="px-4 py-3 font-['JetBrains_Mono']">{student.leetcode.stats?.contestRating ?? 0}</td>
-                        <td className="px-4 py-3 font-['JetBrains_Mono'] text-white">{student.scores?.leetcode ?? 0}</td>
-                      </>
-                    ) : displayTab === "codeforces" && student.codeforces ? (
-                      <>
-                        <td className="px-4 py-3 font-['JetBrains_Mono']">{student.codeforces.stats?.rating ?? 0}</td>
-                        <td className="px-4 py-3 font-['JetBrains_Mono']">{student.codeforces.stats?.maxRating ?? 0}</td>
-                        <td className="px-4 py-3">{student.codeforces.stats?.rank ?? "—"}</td>
-                        <td className="px-4 py-3 font-['JetBrains_Mono']">{student.codeforces.stats?.problemsSolved ?? 0}</td>
-                        <td className="px-4 py-3 font-['JetBrains_Mono'] text-white">{student.scores?.codeforces ?? 0}</td>
-                      </>
-                    ) : displayTab === "codechef" && student.codechef ? (
-                      <>
-                        <td className="px-4 py-3 font-['JetBrains_Mono']">{student.codechef.stats?.currentRating ?? 0}</td>
-                        <td className="px-4 py-3 font-['JetBrains_Mono']">{student.codechef.stats?.highestRating ?? 0}</td>
-                        <td className="px-4 py-3 font-['JetBrains_Mono']">{student.codechef.stats?.stars ?? 0}★</td>
-                        <td className="px-4 py-3 font-['JetBrains_Mono']">{student.codechef.stats?.totalProblemsSolved ?? 0}</td>
-                        <td className="px-4 py-3 font-['JetBrains_Mono'] text-white">{student.scores?.codechef ?? 0}</td>
+                        {platformColumns[displayTab].map((col) => {
+                          const val = col.getValue(student);
+                          return (
+                            <td
+                              key={col.statKey}
+                              className={`px-4 py-3 font-['JetBrains_Mono'] ${sortBy === col.statKey ? "text-[#4ade80]" : ""}`}
+                            >
+                              {displayTab === "codechef" && col.label === "Stars" ? `${val}★` : val}
+                            </td>
+                          );
+                        })}
+                        <td className={`px-4 py-3 font-['JetBrains_Mono'] ${!sortBy || sortBy === `scores.${displayTab}` ? "text-[#4ade80]" : ""}`}>
+                          {student.scores?.[displayTab] ?? 0}
+                        </td>
                       </>
                     ) : null}
                   </tr>
@@ -526,7 +582,7 @@ export function Leaderboard() {
 
       {/* Search result CTA */}
       {searchQuery && students.length > 0 && (
-        <div className="mt-4 flex flex-col gap-2 rounded border border-[#1a1a1a] bg-[#0a0a0a] px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+        <div className="mt-4 flex flex-col gap-2 rounded border border-[#1e1e1e] bg-[#111111] px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
           <span className="text-sm text-[#888888]">
             Found yourself? Your profile might be incomplete.
           </span>

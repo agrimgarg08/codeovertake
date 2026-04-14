@@ -1,19 +1,21 @@
 import { Link, Outlet, useLocation } from "react-router";
-import { Code2, Zap, Globe, Linkedin, Github } from "lucide-react";
+import { Code2, Zap, Globe, Linkedin, Github, Swords } from "lucide-react";
 
 export function Layout() {
   const location = useLocation();
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-black text-white">
+    <div className="min-h-screen overflow-x-hidden bg-[#0a0a0a] text-white">
       {/* Navbar */}
-      <nav className="sticky top-0 z-50 border-b border-[#1a1a1a] bg-black/80 backdrop-blur-sm">
+      <nav className="sticky top-0 z-50 border-b border-[#1e1e1e] bg-[#0a0a0a]/90 backdrop-blur-sm">
         <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
           <div className="flex h-14 items-center justify-between sm:h-16">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 transition-opacity hover:opacity-70">
-              <Code2 className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={1.5} />
-              <span className="font-['JetBrains_Mono'] text-base tracking-tight sm:text-lg">CodeOvertake</span>
+              <Code2 className="h-5 w-5 text-[#4ade80] sm:h-6 sm:w-6" strokeWidth={1.5} />
+              <span className="font-['JetBrains_Mono'] text-base tracking-tight sm:text-lg">
+                Code<span className="text-[#4ade80]">Overtake</span>
+              </span>
             </Link>
 
             {/* Nav Links */}
@@ -26,7 +28,7 @@ export function Layout() {
               >
                 Leaderboard
                 {location.pathname === "/" && (
-                  <div className="absolute -bottom-[13px] left-0 right-0 h-[2px] bg-white sm:-bottom-4" />
+                  <div className="absolute -bottom-[13px] left-0 right-0 h-[2px] bg-[#4ade80] sm:-bottom-4" />
                 )}
               </Link>
               <Link
@@ -38,7 +40,19 @@ export function Layout() {
                 <Zap className="hidden h-3.5 w-3.5 sm:block" />
                 Claim Spot
                 {location.pathname === "/register" && (
-                  <div className="absolute -bottom-[13px] left-0 right-0 h-[2px] bg-white sm:-bottom-4" />
+                  <div className="absolute -bottom-[13px] left-0 right-0 h-[2px] bg-[#4ade80] sm:-bottom-4" />
+                )}
+              </Link>
+              <Link
+                to="/headon"
+                className={`relative flex items-center gap-1.5 text-sm transition-colors ${
+                  location.pathname === "/headon" ? "text-white" : "text-[#888888] hover:text-white"
+                }`}
+              >
+                <Swords className="hidden h-3.5 w-3.5 sm:block" />
+                HeadOn
+                {location.pathname === "/headon" && (
+                  <div className="absolute -bottom-[13px] left-0 right-0 h-[2px] bg-[#4ade80] sm:-bottom-4" />
                 )}
               </Link>
               <Link
@@ -49,7 +63,7 @@ export function Layout() {
               >
                 About
                 {location.pathname === "/about" && (
-                  <div className="absolute -bottom-[13px] left-0 right-0 h-[2px] bg-white sm:-bottom-4" />
+                  <div className="absolute -bottom-[13px] left-0 right-0 h-[2px] bg-[#4ade80] sm:-bottom-4" />
                 )}
               </Link>
             </div>
@@ -63,14 +77,16 @@ export function Layout() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-[#1a1a1a] bg-black">
+      <footer className="border-t border-[#1e1e1e] bg-[#0a0a0a]">
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
           <div className="grid gap-10 sm:grid-cols-3">
             {/* About */}
             <div>
               <div className="mb-3 flex items-center gap-2">
-                <Code2 className="h-5 w-5" strokeWidth={1.5} />
-                <span className="font-['JetBrains_Mono'] text-base tracking-tight">CodeOvertake</span>
+                <Code2 className="h-5 w-5 text-[#4ade80]" strokeWidth={1.5} />
+                <span className="font-['JetBrains_Mono'] text-base tracking-tight">
+                  Code<span className="text-[#4ade80]">Overtake</span>
+                </span>
               </div>
               <p className="font-['Archivo'] text-sm leading-relaxed text-[#888888]">
                 Track and compare coding profiles across platforms. Built for NSUT students to fuel healthy competition and growth.
@@ -109,7 +125,7 @@ export function Layout() {
           </div>
 
           {/* Bottom bar */}
-          <div className="mt-10 border-t border-[#1a1a1a] pt-6 text-center font-['Archivo'] text-xs text-[#666666]">
+          <div className="mt-10 border-t border-[#1e1e1e] pt-6 text-center font-['Archivo'] text-xs text-[#666666]">
             © {new Date().getFullYear()} CodeOvertake. All rights reserved.
           </div>
         </div>

@@ -46,6 +46,8 @@ export async function fetchPlatformLeaderboard(platform: string, params: Leaderb
   if (params.year) qs.set("year", String(params.year));
   if (params.branch) qs.set("branch", params.branch);
   if (params.search) qs.set("search", params.search);
+  if (params.sortBy) qs.set("sortBy", params.sortBy);
+  if (params.order) qs.set("order", params.order);
   if (params.page) qs.set("page", String(params.page));
   if (params.limit) qs.set("limit", String(params.limit));
   return request<{ students: any[]; pagination: { page: number; limit: number; total: number; pages: number } }>(
@@ -164,6 +166,10 @@ export async function fetchStudentHistory(rollno: string, days = 30) {
       scores: { github: number; leetcode: number; codeforces: number; codechef: number; total: number };
     }>;
   }>(`/students/${encodeURIComponent(rollno)}/history?days=${days}`);
+}
+
+export async function fetchHeatmap(rollno: string) {
+  return request<Record<string, Record<string, number>>>(`/students/${encodeURIComponent(rollno)}/heatmap`);
 }
 
 export async function fetchBranches() {
