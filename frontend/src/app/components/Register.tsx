@@ -595,6 +595,10 @@ export function Register() {
                 </h2>
                 <p className="mt-1 text-sm text-[#666666]">Link platforms to boost your score • Paste URLs or usernames</p>
                 <p className="mt-1.5 text-xs text-yellow-500/80">⚠ Usernames cannot be deleted once added — only updated.</p>
+                <div className="mt-3 rounded-lg border border-[#4ade80]/20 bg-[#4ade80]/5 px-4 py-3">
+                  <p className="font-['JetBrains_Mono'] text-sm text-[#4ade80]">Your usernames are completely private</p>
+                  <p className="mt-1 text-xs text-[#888888]">Only your stats are shown publicly - no one can see your usernames. So go ahead, add them without any worries!</p>
+                </div>
               </div>
 
               {platforms.map((platform) => {

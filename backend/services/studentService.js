@@ -191,12 +191,9 @@ async function updateStudentUsernames(rollno, usernameData) {
   const updates = [];
   for (const p of platforms) {
     const newUsername = usernameData[p.key];
-    if (newUsername !== undefined && newUsername !== (student[p.key]?.username || '')) {
-      if (newUsername) {
-        updates.push({ platform: p, username: newUsername });
-      } else {
-        student[p.key].username = '';
-      }
+    // Skip undefined and empty strings — don't overwrite existing usernames with blank
+    if (newUsername !== undefined && newUsername !== '' && newUsername !== (student[p.key]?.username || '')) {
+      updates.push({ platform: p, username: newUsername });
     }
   }
 

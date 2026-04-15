@@ -1,5 +1,8 @@
 const Student = require('../models/Student');
 const Snapshot = require('../models/Snapshot');
+const { getAllPlatforms } = require('../platforms');
+
+const platforms = getAllPlatforms();
 
 /**
  * Calculate overall, year-wise, and branch-wise rankings.
@@ -39,6 +42,16 @@ async function calculateRankings(today = null) {
     const group = branchGroups[key].sort((a, b) => b.scores.total - a.scores.total);
     for (let i = 0; i < group.length; i++) {
       group[i].ranks.branchWise = i + 1;
+    }
+  }
+
+  // Platform-wise ranking (only among students with that platform linked)
+  for (const p of platforms) {
+    const linked = students
+      .filter((s) => s[p.key]?.username)
+      .sort((a, b) => (b.scores[p.key] || 0) - (a.scores[p.key] || 0));
+    for (let i = 0; i < linked.length; i++) {
+      linked[i].ranks[p.key] = i + 1;
     }
   }
 

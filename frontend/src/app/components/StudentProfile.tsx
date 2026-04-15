@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { Link, useParams, Navigate } from "react-router";
-import { ArrowLeft, Edit3, X, Save, History, Clock, Share2, Plus, UserPlus, Trophy } from "lucide-react";
+import { ArrowLeft, Edit3, X, Save, History, Clock, Share2, Plus, UserPlus, Trophy, Check, Loader2 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { platforms, type Platform } from "../mockData";
-import { fetchStudent, fetchStudentHistory, updateUsernames as apiUpdateUsernames, restoreUsernames as apiRestoreUsernames, fetchHeatmap } from "../api";
+import { fetchStudent, fetchStudentHistory, updateUsernames as apiUpdateUsernames, restoreUsernames as apiRestoreUsernames, fetchHeatmap, validatePlatformUsername } from "../api";
 import { GithubIcon, LeetcodeIcon, CodeforcesIcon, CodechefIcon } from "./PlatformIcons";
 import { Heatmap, CombinedHeatmap } from "./Heatmap";
 
@@ -28,8 +28,47 @@ export function StudentProfile() {
   });
   const editSectionRef = useRef<HTMLDivElement>(null);
 
+  // Platform validation state (like Register)
+  const [platformValidation, setPlatformValidation] = useState<
+    Record<string, { status: "idle" | "validating" | "valid" | "invalid"; stats?: Record<string, any> }>
+  >({});
+  const validationTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+  const validatePlatform = useCallback((platform: Platform, username: string) => {
+    if (validationTimers.current[platform]) {
+      clearTimeout(validationTimers.current[platform]);
+    }
+    if (!username.trim()) {
+      setPlatformValidation((prev) => ({ ...prev, [platform]: { status: "idle" } }));
+      return;
+    }
+    setPlatformValidation((prev) => ({ ...prev, [platform]: { status: "validating" } }));
+    validationTimers.current[platform] = setTimeout(async () => {
+      try {
+        const result = await validatePlatformUsername(platform, username);
+        setPlatformValidation((prev) => ({
+          ...prev,
+          [platform]: result.valid
+            ? { status: "valid", stats: result.stats || undefined }
+            : { status: "invalid" },
+        }));
+      } catch {
+        setPlatformValidation((prev) => ({ ...prev, [platform]: { status: "invalid" } }));
+      }
+    }, 600);
+  }, []);
+
+  // Block save if any filled username is invalid or still validating
+  const hasInvalidPlatform = platforms.some((p) => {
+    const username = editData[p].trim();
+    if (!username) return false;
+    const v = platformValidation[p];
+    return !v || v.status !== "valid";
+  });
+
   const startEditing = () => {
     setIsEditing(true);
+    setPlatformValidation({});
     setTimeout(() => {
       editSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 50);
@@ -158,7 +197,17 @@ export function StudentProfile() {
     setIsSaving(true);
     setSaveError("");
     try {
-      const result = await apiUpdateUsernames(student.rollno, editData);
+      // Only send non-empty usernames (empty = no change, not "clear")
+      const payload: Record<string, string> = {};
+      for (const [key, value] of Object.entries(editData)) {
+        if (value.trim()) payload[key] = value.trim();
+      }
+      if (Object.keys(payload).length === 0) {
+        setSaveError("No changes to save");
+        setIsSaving(false);
+        return;
+      }
+      const result = await apiUpdateUsernames(student.rollno, payload);
       setStudent(result.student);
       setIsEditing(false);
       // Set 24-hour cooldown
@@ -570,11 +619,43 @@ export function StudentProfile() {
                       onChange={(e) => {
                         const extracted = extractUsername(platform, e.target.value);
                         setEditData({ ...editData, [platform]: extracted });
+                        validatePlatform(platform, extracted);
                       }}
                       style={{ paddingLeft: `calc(12px + ${prefix.length}ch)` }}
-                      className="h-10 w-full rounded border border-[#1e1e1e] bg-[#0a0a0a] pr-3 font-['JetBrains_Mono'] text-xs text-white placeholder-[#555555] outline-none transition-all focus:border-[#333333] focus:shadow-lg focus:shadow-white/5"
+                      className={`h-10 w-full rounded border bg-[#0a0a0a] pr-10 font-['JetBrains_Mono'] text-xs text-white placeholder-[#555555] outline-none transition-all focus:shadow-lg focus:shadow-white/5 ${
+                        platformValidation[platform]?.status === "valid"
+                          ? "border-[#4ade80] focus:border-[#4ade80]"
+                          : platformValidation[platform]?.status === "invalid"
+                          ? "border-[#ff4444] focus:border-[#ff4444]"
+                          : "border-[#1e1e1e] focus:border-[#333333]"
+                      }`}
                     />
+                    {/* Validation indicator */}
+                    {editData[platform].trim() && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {platformValidation[platform]?.status === "validating" && (
+                          <Loader2 className="h-4 w-4 animate-spin text-[#888888]" />
+                        )}
+                        {platformValidation[platform]?.status === "valid" && (
+                          <Check className="h-4 w-4 text-[#4ade80]" />
+                        )}
+                        {platformValidation[platform]?.status === "invalid" && (
+                          <X className="h-4 w-4 text-[#ff4444]" />
+                        )}
+                      </div>
+                    )}
                   </div>
+                  {/* Stats preview */}
+                  {platformValidation[platform]?.status === "valid" && platformValidation[platform]?.stats && (
+                    <div className="mt-1 rounded border border-[#1e1e1e] bg-[#0a0a0a] p-2 font-['JetBrains_Mono'] text-[10px] text-[#888888]">
+                      {Object.entries(platformValidation[platform].stats!).slice(0, 4).map(([k, v]) => (
+                        <span key={k} className="mr-3">{k}: <span className="text-white">{String(v)}</span></span>
+                      ))}
+                    </div>
+                  )}
+                  {platformValidation[platform]?.status === "invalid" && (
+                    <div className="mt-1 text-[10px] text-[#ff4444]">Username not found on {label}</div>
+                  )}
                 </div>
               );
             })}
@@ -585,7 +666,7 @@ export function StudentProfile() {
               )}
               <button
                 onClick={handleSave}
-                disabled={isSaving}
+                disabled={isSaving || hasInvalidPlatform}
                 className="flex h-10 items-center gap-2 rounded bg-[#4ade80] px-4 text-sm text-[#0a0a0a] transition-opacity hover:opacity-90 disabled:opacity-50"
               >
                 <Save className="h-4 w-4" />
@@ -595,6 +676,7 @@ export function StudentProfile() {
                 onClick={() => {
                   setIsEditing(false);
                   setSaveError("");
+                  setPlatformValidation({});
                   setEditData({
                     github: "",
                     leetcode: "",

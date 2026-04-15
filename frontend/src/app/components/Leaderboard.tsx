@@ -386,7 +386,17 @@ export function Leaderboard() {
           </div>
         ) : (
           students.map((student, idx) => {
-            const rank = idx + 1;
+            const hasFilters = selectedYear !== "all" || selectedBranch !== "all";
+            const rank = displayTab === "all"
+              ? (selectedBranch !== "all" && selectedYear !== "all"
+                ? student.ranks?.branchWise
+                : selectedYear !== "all"
+                ? student.ranks?.yearWise
+                : student.ranks?.overall)
+              || idx + 1
+              : hasFilters
+              ? student.filteredRank || idx + 1
+              : student.ranks?.[displayTab] || idx + 1;
             return (
               <Link
                 key={`${student.rollno}-${idx}`}
@@ -522,7 +532,17 @@ export function Leaderboard() {
               </tr>
             ) : (
               students.map((student, idx) => {
-                const rank = idx + 1;
+                const hasFilters = selectedYear !== "all" || selectedBranch !== "all";
+                const rank = displayTab === "all"
+                  ? (selectedBranch !== "all" && selectedYear !== "all"
+                    ? student.ranks?.branchWise
+                    : selectedYear !== "all"
+                    ? student.ranks?.yearWise
+                    : student.ranks?.overall)
+                  || idx + 1
+                  : hasFilters
+                  ? student.filteredRank || idx + 1
+                  : student.ranks?.[displayTab] || idx + 1;
                 return (
                   <tr key={`${student.rollno}-${idx}`} className="transition-colors hover:bg-[#111111]">
                     <td className="px-4 py-3 font-['JetBrains_Mono'] text-[#888888]">{rank}</td>

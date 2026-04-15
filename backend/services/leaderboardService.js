@@ -89,6 +89,30 @@ async function getPlatformLeaderboard(platformKey, { year, branch, order = 'desc
     Student.countDocuments(filter),
   ]);
 
+  // If year/branch filters are active, compute each student's rank within
+  // that filtered pool (excluding search). Bounded by page size so this is cheap.
+  const hasPoolFilter = year || branch;
+  if (hasPoolFilter) {
+    const baseFilter = {};
+    if (year) baseFilter.year = parseInt(year);
+    if (branch) baseFilter.branch = branch.toUpperCase();
+    if (platformKey !== 'all') {
+      baseFilter[`${platformKey}.username`] = { $ne: '' };
+    }
+    const scoreField = platformKey === 'all' ? 'scores.total' : `scores.${platformKey}`;
+
+    await Promise.all(
+      students.map(async (s) => {
+        const score = platformKey === 'all' ? (s.scores?.total ?? 0) : (s.scores?.[platformKey] ?? 0);
+        const higherCount = await Student.countDocuments({
+          ...baseFilter,
+          [scoreField]: { $gt: score },
+        });
+        s._doc.filteredRank = higherCount + 1;
+      })
+    );
+  }
+
   return {
     students,
     pagination: { page: parseInt(page), limit: lim, total, pages: Math.ceil(total / lim) },
