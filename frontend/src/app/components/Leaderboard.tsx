@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router";
-import { Search, Rocket, Zap, TrendingUp, ArrowUpRight, Loader2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Search, Rocket, Zap, TrendingUp, ArrowUpRight, Loader2, ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronUp } from "lucide-react";
 import { platforms, type Platform } from "../mockData";
 import { fetchLeaderboard, fetchPlatformLeaderboard, fetchFilters, fetchTopGainers } from "../api";
 import { GithubIcon, LeetcodeIcon, CodeforcesIcon, CodechefIcon } from "./PlatformIcons";
@@ -61,6 +61,7 @@ export function Leaderboard() {
   const [gainersPeriod, setGainersPeriod] = useState<{ from: string; to: string } | null>(null);
   const [sortBy, setSortBy] = useState<string | undefined>(undefined);
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
+  const [gainersCollapsed, setGainersCollapsed] = useState(false);
 
   // Load filter options and top gainers once
   useEffect(() => {
@@ -225,7 +226,13 @@ export function Leaderboard() {
       {/* Top Gainers */}
       {topGainers.length > 0 && (
         <div className="mb-6 sm:mb-8">
-          <div className="mb-3 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setGainersCollapsed((prev) => !prev)}
+            className="mb-3 flex w-full items-center gap-2 text-left"
+            aria-expanded={!gainersCollapsed}
+            aria-controls="top-gainers-grid"
+          >
             <TrendingUp className="h-4 w-4 text-[#4ade80]" />
             <h2 className="font-['JetBrains_Mono'] text-sm uppercase tracking-wider text-[#888888]">Top Gainers</h2>
             {gainersPeriod && (
@@ -233,28 +240,35 @@ export function Leaderboard() {
                 {gainersPeriod.from} → {gainersPeriod.to}
               </span>
             )}
-          </div>
-          <div className="grid gap-2 sm:grid-cols-5">
-            {topGainers.map((g, i) => (
-              <Link
-                key={g.rollno}
-                to={`/student/${g.rollno}`}
-                className="flex items-center gap-3 rounded border border-[#1e1e1e] bg-[#111111] p-3 transition-colors hover:border-[#333333]"
-              >
-                <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded bg-[#1e1e1e] font-['JetBrains_Mono'] text-xs text-[#888888]">
-                  {i + 1}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm">{g.name}</div>
-                  <div className="font-['JetBrains_Mono'] text-xs text-[#666666]">{g.rollno}</div>
-                </div>
-                <div className="flex items-center gap-1 font-['JetBrains_Mono'] text-sm text-[#4ade80]">
-                  <ArrowUpRight className="h-3 w-3" />
-                  +{g.gain}
-                </div>
-              </Link>
-            ))}
-          </div>
+            {gainersCollapsed ? (
+              <ChevronDown className="ml-auto h-4 w-4 text-[#888888]" />
+            ) : (
+              <ChevronUp className="ml-auto h-4 w-4 text-[#888888]" />
+            )}
+          </button>
+          {!gainersCollapsed && (
+            <div id="top-gainers-grid" className="grid gap-2 sm:grid-cols-5">
+              {topGainers.map((g, i) => (
+                <Link
+                  key={g.rollno}
+                  to={`/student/${g.rollno}`}
+                  className="flex items-center gap-3 rounded border border-[#1e1e1e] bg-[#111111] p-3 transition-colors hover:border-[#333333]"
+                >
+                  <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded bg-[#1e1e1e] font-['JetBrains_Mono'] text-xs text-[#888888]">
+                    {i + 1}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm">{g.name}</div>
+                    <div className="font-['JetBrains_Mono'] text-xs text-[#666666]">{g.rollno}</div>
+                  </div>
+                  <div className="flex items-center gap-1 font-['JetBrains_Mono'] text-sm text-[#4ade80]">
+                    <ArrowUpRight className="h-3 w-3" />
+                    +{g.gain}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
