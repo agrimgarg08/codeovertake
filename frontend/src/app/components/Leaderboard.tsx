@@ -230,6 +230,8 @@ export function Leaderboard() {
             type="button"
             onClick={() => setGainersCollapsed((prev) => !prev)}
             className="mb-3 flex w-full items-center gap-2 text-left"
+            aria-expanded={!gainersCollapsed}
+            aria-controls="top-gainers-grid"
           >
             <TrendingUp className="h-4 w-4 text-[#4ade80]" />
             <h2 className="font-['JetBrains_Mono'] text-sm uppercase tracking-wider text-[#888888]">Top Gainers</h2>
@@ -245,7 +247,7 @@ export function Leaderboard() {
             )}
           </button>
           {!gainersCollapsed && (
-            <div className="grid gap-2 sm:grid-cols-5">
+            <div id="top-gainers-grid" className="grid gap-2 sm:grid-cols-5">
               {topGainers.map((g, i) => (
                 <Link
                   key={g.rollno}
