@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { Link, useParams, Navigate } from "react-router";
-import { ArrowLeft, Edit3, X, Save, History, Clock, Share2, Plus, UserPlus, Trophy, Check, Loader2 } from "lucide-react";
+import { ArrowLeft, Edit3, X, Save, History, Clock, Share2, Plus, UserPlus, Trophy, Check, Loader2, GraduationCap } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { platforms, type Platform } from "../mockData";
-import { fetchStudent, fetchStudentHistory, updateUsernames as apiUpdateUsernames, restoreUsernames as apiRestoreUsernames, fetchHeatmap, validatePlatformUsername } from "../api";
+import { fetchStudent, fetchStudentHistory, updateUsernames as apiUpdateUsernames, restoreUsernames as apiRestoreUsernames, fetchHeatmap, validatePlatformUsername, fetchStudentResults, type StudentResults } from "../api";
 import { GithubIcon, LeetcodeIcon, CodeforcesIcon, CodechefIcon } from "./PlatformIcons";
 import { Heatmap, CombinedHeatmap } from "./Heatmap";
 
@@ -14,6 +14,8 @@ export function StudentProfile() {
   const [notFound, setNotFound] = useState(false);
   const [scoreHistory, setScoreHistory] = useState<any[]>([]);
   const [heatmapData, setHeatmapData] = useState<Record<string, Record<string, number>>>({});
+  const [resultsData, setResultsData] = useState<StudentResults | null>(null);
+  const [resultsLoading, setResultsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -128,6 +130,16 @@ export function StudentProfile() {
     fetchHeatmap(rollNo)
       .then((data) => setHeatmapData(data))
       .catch(() => {});
+  }, [rollNo]);
+
+  // Fetch results (CGPA) data
+  useEffect(() => {
+    if (!rollNo) return;
+    setResultsLoading(true);
+    fetchStudentResults(rollNo)
+      .then((data) => setResultsData(data))
+      .catch(() => setResultsData(null))
+      .finally(() => setResultsLoading(false));
   }, [rollNo]);
 
   if (loading) {
@@ -382,6 +394,69 @@ export function StudentProfile() {
           <div className="text-[10px] text-[#888888] sm:text-xs">Branch Rank</div>
         </div>
       </div>
+
+      {/* Results Card (CGPA) */}
+      {resultsLoading ? (
+        <div className="mb-6 flex items-center justify-center rounded border border-[#1e1e1e] bg-[#111111] p-6 sm:mb-8">
+          <Loader2 className="h-5 w-5 animate-spin text-[#888888]" />
+          <span className="ml-2 text-sm text-[#888888]">Loading results...</span>
+        </div>
+      ) : resultsData ? (
+        <div className="mb-6 rounded border border-[#1e1e1e] bg-[#111111] p-4 sm:mb-8 sm:p-6">
+          <div className="mb-4 flex items-center gap-3">
+            <GraduationCap className="h-5 w-5 text-[#4ade80]" />
+            <h3 className="font-['JetBrains_Mono'] text-lg">Academic Results</h3>
+          </div>
+
+          {/* CGPA and key stats */}
+          <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+            <div className="rounded border border-[#1e1e1e] bg-[#0a0a0a] p-3 text-center sm:p-4">
+              <div className="font-['JetBrains_Mono'] text-2xl text-[#4ade80] sm:text-3xl">{resultsData.cgpa.toFixed(2)}</div>
+              <div className="mt-1 text-[10px] text-[#888888] sm:text-xs">CGPA</div>
+            </div>
+            <div className="rounded border border-[#1e1e1e] bg-[#0a0a0a] p-3 text-center sm:p-4">
+              <div className="font-['JetBrains_Mono'] text-lg sm:text-2xl">#{resultsData.rank}</div>
+              <div className="mt-1 text-[10px] text-[#888888] sm:text-xs">College Rank</div>
+            </div>
+            <div className="rounded border border-[#1e1e1e] bg-[#0a0a0a] p-3 text-center sm:p-4">
+              <div className="font-['JetBrains_Mono'] text-lg sm:text-2xl">#{resultsData.branch_rank}</div>
+              <div className="mt-1 text-[10px] text-[#888888] sm:text-xs">Branch Rank</div>
+            </div>
+            <div className="rounded border border-[#1e1e1e] bg-[#0a0a0a] p-3 text-center sm:p-4">
+              <div className="font-['JetBrains_Mono'] text-lg sm:text-2xl">{resultsData.percentile.toFixed(1)}%</div>
+              <div className="mt-1 text-[10px] text-[#888888] sm:text-xs">Percentile</div>
+            </div>
+          </div>
+
+          {/* Credits */}
+          <div className="mb-4 text-center text-xs text-[#888888]">
+            Credits Completed: <span className="font-['JetBrains_Mono'] text-white">{resultsData.credits_completed}</span>
+          </div>
+
+          {/* Semester-wise SGPA */}
+          {resultsData.semesters && resultsData.semesters.length > 0 && (
+            <div>
+              <h4 className="mb-3 font-['JetBrains_Mono'] text-xs uppercase tracking-wider text-[#888888]">
+                Semester Performance
+              </h4>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+                {resultsData.semesters.map((sem) => (
+                  <div
+                    key={sem.semester}
+                    className="rounded border border-[#1e1e1e] bg-[#0a0a0a] p-3 text-center"
+                  >
+                    <div className="mb-1 text-[10px] text-[#666666]">Semester {sem.semester}</div>
+                    <div className="font-['JetBrains_Mono'] text-lg text-white">{sem.sgpa.toFixed(2)}</div>
+                    <div className="mt-1 text-[10px] text-[#888888]">
+                      {sem.credits_secured}/{sem.credits_registered} credits
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      ) : null}
 
       {/* Platform Stats Cards */}
       <div className="mb-6 grid gap-3 sm:mb-8 sm:grid-cols-2 sm:gap-4">

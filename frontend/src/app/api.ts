@@ -175,3 +175,42 @@ export async function fetchHeatmap(rollno: string) {
 export async function fetchBranches() {
   return request<any>("/students/branches");
 }
+
+// ---- Results (CGPA) ----
+
+export interface StudentResults {
+  rollNo: string;
+  name: string;
+  branch_code: string;
+  year_of_study: string;
+  cgpa: number;
+  rank: number;
+  branch_rank: number;
+  percentile: number;
+  credits_completed: number;
+  semesters: Array<{
+    semester: string;
+    sgpa: number;
+    credits_registered: number | string;
+    credits_secured: number | string;
+    subjects: Array<{
+      subject_code: string;
+      grade: string;
+      marks: number | string;
+    }>;
+  }>;
+}
+
+const RESULTHUB_API_BASE = "https://resulthubnsut.sujal.info";
+
+export async function fetchStudentResults(rollno: string): Promise<StudentResults | null> {
+  try {
+    const res = await fetch(`${RESULTHUB_API_BASE}/api/nsut/students/${encodeURIComponent(rollno)}`);
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (!json.success) return null;
+    return json.data;
+  } catch {
+    return null;
+  }
+}
