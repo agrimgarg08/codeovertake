@@ -201,9 +201,11 @@ export interface StudentResults {
   }>;
 }
 
+const RESULTHUB_API_BASE = "https://resulthubnsut.sujal.info";
+
 export async function fetchStudentResults(rollno: string): Promise<StudentResults | null> {
   try {
-    const res = await fetch(`https://resulthubnsut.sujal.info/api/nsut/students/${encodeURIComponent(rollno)}`);
+    const res = await fetch(`${RESULTHUB_API_BASE}/api/nsut/students/${encodeURIComponent(rollno)}`);
     if (!res.ok) return null;
     const json = await res.json();
     if (!json.success) return null;

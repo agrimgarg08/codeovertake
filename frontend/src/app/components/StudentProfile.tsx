@@ -411,7 +411,7 @@ export function StudentProfile() {
           {/* CGPA and key stats */}
           <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
             <div className="rounded border border-[#1e1e1e] bg-[#0a0a0a] p-3 text-center sm:p-4">
-              <div className="font-['JetBrains_Mono'] text-2xl text-[#4ade80] sm:text-3xl">{resultsData.cgpa}</div>
+              <div className="font-['JetBrains_Mono'] text-2xl text-[#4ade80] sm:text-3xl">{resultsData.cgpa.toFixed(2)}</div>
               <div className="mt-1 text-[10px] text-[#888888] sm:text-xs">CGPA</div>
             </div>
             <div className="rounded border border-[#1e1e1e] bg-[#0a0a0a] p-3 text-center sm:p-4">
@@ -423,7 +423,7 @@ export function StudentProfile() {
               <div className="mt-1 text-[10px] text-[#888888] sm:text-xs">Branch Rank</div>
             </div>
             <div className="rounded border border-[#1e1e1e] bg-[#0a0a0a] p-3 text-center sm:p-4">
-              <div className="font-['JetBrains_Mono'] text-lg sm:text-2xl">{resultsData.percentile}%</div>
+              <div className="font-['JetBrains_Mono'] text-lg sm:text-2xl">{resultsData.percentile.toFixed(1)}%</div>
               <div className="mt-1 text-[10px] text-[#888888] sm:text-xs">Percentile</div>
             </div>
           </div>
@@ -446,7 +446,7 @@ export function StudentProfile() {
                     className="rounded border border-[#1e1e1e] bg-[#0a0a0a] p-3 text-center"
                   >
                     <div className="mb-1 text-[10px] text-[#666666]">Semester {sem.semester}</div>
-                    <div className="font-['JetBrains_Mono'] text-lg text-white">{sem.sgpa}</div>
+                    <div className="font-['JetBrains_Mono'] text-lg text-white">{sem.sgpa.toFixed(2)}</div>
                     <div className="mt-1 text-[10px] text-[#888888]">
                       {sem.credits_secured}/{sem.credits_registered} credits
                     </div>
