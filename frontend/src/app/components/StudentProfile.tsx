@@ -118,6 +118,9 @@ export function StudentProfile() {
             leetcode: s.scores?.leetcode ?? 0,
             codeforces: s.scores?.codeforces ?? 0,
             codechef: s.scores?.codechef ?? 0,
+            rankOverall: s.ranks?.overall ?? null,
+            rankYear: s.ranks?.yearWise ?? null,
+            rankBranch: s.ranks?.branchWise ?? null,
           }))
         );
       })
@@ -867,6 +870,47 @@ export function StudentProfile() {
             </LineChart>
           </ResponsiveContainer>
           )}
+        </div>
+      )}
+
+      {/* Rank History Chart */}
+      {scoreHistory.length >= 2 && scoreHistory.some((s) => s.rankOverall !== null) && (
+        <div className="rounded border border-[#1e1e1e] bg-[#111111] p-6">
+          <h3 className="mb-6 font-['JetBrains_Mono'] text-lg">Rank History (Last 30 Days)</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={scoreHistory}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#1e1e1e" />
+              <XAxis
+                dataKey="date"
+                stroke="#888888"
+                style={{ fontSize: "12px", fontFamily: "JetBrains Mono" }}
+                tickFormatter={(date) => new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+              />
+              <YAxis
+                reversed
+                stroke="#888888"
+                style={{ fontSize: "12px", fontFamily: "JetBrains Mono" }}
+                allowDecimals={false}
+                tickFormatter={(v) => `#${v}`}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "#111111",
+                  border: "1px solid #1e1e1e",
+                  borderRadius: "4px",
+                  fontFamily: "JetBrains Mono",
+                  fontSize: "12px",
+                }}
+                labelStyle={{ color: "#888888" }}
+                formatter={(value: any) => [`#${value}`, undefined]}
+              />
+              <Legend wrapperStyle={{ fontFamily: "JetBrains Mono", fontSize: "12px" }} />
+              <Line type="monotone" dataKey="rankOverall" stroke="#4ade80" strokeWidth={2} name="Overall" dot={false} connectNulls />
+              <Line type="monotone" dataKey="rankYear" stroke="#60a5fa" strokeWidth={1.5} name="Year" dot={false} connectNulls />
+              <Line type="monotone" dataKey="rankBranch" stroke="#f472b6" strokeWidth={1.5} name="Branch" dot={false} connectNulls />
+            </LineChart>
+          </ResponsiveContainer>
+          <p className="mt-3 text-center font-['JetBrains_Mono'] text-xs text-[#666666]">Lower is better — #1 is top</p>
         </div>
       )}
 

@@ -164,6 +164,7 @@ export async function fetchStudentHistory(rollno: string, days = 30) {
     snapshots: Array<{
       date: string;
       scores: { github: number; leetcode: number; codeforces: number; codechef: number; total: number };
+      ranks?: { overall: number; yearWise: number; branchWise: number };
     }>;
   }>(`/students/${encodeURIComponent(rollno)}/history?days=${days}`);
 }
