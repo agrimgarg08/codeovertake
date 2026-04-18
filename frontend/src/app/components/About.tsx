@@ -54,10 +54,10 @@ export function About() {
               <tbody className="divide-y divide-[#111111]">
                 {[
                   { platform: "GitHub", total: "1000", rows: [
-                    { name: "Contributions", max: "600", curve: "Exponential" },
-                    { name: "Stars", max: "200", curve: "Exponential" },
-                    { name: "Public Repos", max: "100", curve: "Exponential" },
-                    { name: "Followers", max: "100", curve: "Exponential" },
+                    { name: "Contributions", max: "800", curve: "Exponential" },
+                    { name: "Stars", max: "100", curve: "Exponential" },
+                    { name: "Public Repos", max: "50", curve: "Exponential" },
+                    { name: "Followers", max: "50", curve: "Exponential" },
                   ]},
                   { platform: "LeetCode", total: "1000", rows: [
                     { name: "Problems Solved (Easy×1 + Med×3 + Hard×6)", max: "700", curve: "Exponential" },

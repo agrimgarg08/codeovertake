@@ -80,10 +80,10 @@ async function validateUsername(username) {
 function calculateScore(stats) {
   if (!stats) return 0;
   const { publicRepos = 0, totalStars = 0, followers = 0, contributions = 0 } = stats;
-  const contribScore = Math.min(600, Math.round(600 * (1 - Math.exp(-contributions / 250))));
-  const repoScore = Math.min(100, Math.round(100 * (1 - Math.exp(-publicRepos / 12))));
-  const starScore = Math.min(200, Math.round(200 * (1 - Math.exp(-totalStars / 8))));
-  const followerScore = Math.min(100, Math.round(100 * (1 - Math.exp(-followers / 8))));
+  const contribScore = Math.min(800, Math.round(800 * (1 - Math.exp(-contributions / 250))));
+  const repoScore = Math.min(50, Math.round(50 * (1 - Math.exp(-publicRepos / 12))));
+  const starScore = Math.min(100, Math.round(100 * (1 - Math.exp(-totalStars / 8))));
+  const followerScore = Math.min(50, Math.round(50 * (1 - Math.exp(-followers / 8))));
   return Math.min(1000, contribScore + repoScore + starScore + followerScore);
 }
 

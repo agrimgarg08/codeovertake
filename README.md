@@ -136,10 +136,10 @@ Each platform contributes up to **1000 points** (max total: 4000). Exponential c
 
 | Platform | Component | Max | Type |
 |----------|-----------|-----|------|
-| **GitHub** | Contributions | 600 | Exponential |
-| | Stars | 200 | Exponential |
-| | Public Repos | 100 | Exponential |
-| | Followers | 100 | Exponential |
+| **GitHub** | Contributions | 800 | Exponential |
+| | Stars | 100 | Exponential |
+| | Public Repos | 50 | Exponential |
+| | Followers | 50 | Exponential |
 | **LeetCode** | Weighted Solved (Easy×1 + Med×3 + Hard×6) | 700 | Exponential |
 | | Contest Rating | 300 | Linear |
 | **Codeforces** | Problems Solved | 500 | Exponential |
