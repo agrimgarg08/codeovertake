@@ -61,7 +61,7 @@ export function Leaderboard() {
   const [gainersPeriod, setGainersPeriod] = useState<{ from: string; to: string } | null>(null);
   const [sortBy, setSortBy] = useState<string | undefined>(undefined);
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
-  const [gainersCollapsed, setGainersCollapsed] = useState(false);
+  const [gainersCollapsed, setGainersCollapsed] = useState(true);
 
   // Load filter options and top gainers once
   useEffect(() => {
@@ -100,6 +100,22 @@ export function Leaderboard() {
         result = await fetchPlatformLeaderboard(activeTab, params);
       }
       if (id !== fetchIdRef.current) return; // stale request
+
+      // When using default score sort, sort by stored rank to ensure consistent ordering
+      if (!sortBy) {
+        const hasFilters = selectedYear !== "all" || selectedBranch !== "all";
+        const getRank = (s: any) => {
+          if (activeTab === "all") {
+            if (selectedBranch !== "all" && selectedYear !== "all") return s.ranks?.branchWise ?? 9999;
+            if (selectedYear !== "all") return s.ranks?.yearWise ?? 9999;
+            return s.ranks?.overall ?? 9999;
+          }
+          if (hasFilters) return s.filteredRank ?? 9999;
+          return s.ranks?.[activeTab] ?? 9999;
+        };
+        result.students.sort((a: any, b: any) => getRank(a) - getRank(b));
+      }
+
       if (append) {
         setStudents((prev) => [...prev, ...result.students]);
       } else {
@@ -401,7 +417,11 @@ export function Leaderboard() {
         ) : (
           students.map((student, idx) => {
             const hasFilters = selectedYear !== "all" || selectedBranch !== "all";
-            const rank = displayTab === "all"
+            const rank = sortBy && searchQuery
+              ? "—"
+              : sortBy
+              ? idx + 1
+              : displayTab === "all"
               ? (selectedBranch !== "all" && selectedYear !== "all"
                 ? student.ranks?.branchWise
                 : selectedYear !== "all"
@@ -423,7 +443,7 @@ export function Leaderboard() {
                       {rank}
                     </div>
                     <div>
-                      <div className="font-['Archivo'] text-sm">{student.name}</div>
+                      <div className="font-['Archivo'] text-sm" title={student.name}>{student.name.length > 15 ? student.name.slice(0, 15) + "..." : student.name}</div>
                       <div className="mt-0.5 font-['JetBrains_Mono'] text-xs text-[#888888]">{student.rollno}</div>
                       <div className="mt-0.5 text-xs text-[#666666]">{student.branch} • {student.year}</div>
                     </div>
@@ -547,7 +567,11 @@ export function Leaderboard() {
             ) : (
               students.map((student, idx) => {
                 const hasFilters = selectedYear !== "all" || selectedBranch !== "all";
-                const rank = displayTab === "all"
+                const rank = sortBy && searchQuery
+                  ? "—"
+                  : sortBy
+                  ? idx + 1
+                  : displayTab === "all"
                   ? (selectedBranch !== "all" && selectedYear !== "all"
                     ? student.ranks?.branchWise
                     : selectedYear !== "all"
@@ -560,13 +584,13 @@ export function Leaderboard() {
                 return (
                   <tr key={`${student.rollno}-${idx}`} className="transition-colors hover:bg-[#111111]">
                     <td className="px-4 py-3 font-['JetBrains_Mono'] text-[#888888]">{rank}</td>
-                    <td className="max-w-[250px] px-4 py-3">
+                    <td className="w-[160px] max-w-[160px] px-4 py-3">
                       <Link
                         to={`/student/${student.rollno}`}
-                        className="block truncate transition-colors hover:text-white hover:underline"
+                        className="block transition-colors hover:text-white hover:underline"
                         title={student.name}
                       >
-                        {student.name}
+                        {student.name.length > 15 ? student.name.slice(0, 15) + "..." : student.name}
                       </Link>
                     </td>
                     <td className="px-4 py-3 font-['JetBrains_Mono'] text-[#888888]">{student.rollno}</td>
