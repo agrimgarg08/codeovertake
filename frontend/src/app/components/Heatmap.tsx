@@ -10,18 +10,16 @@ interface HeatmapProps {
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const DAYS = ["", "Mon", "", "Wed", "", "Fri", ""];
 
-function getLevel(count: number, max: number): number {
+function getLevel(count: number, thresholds: number[]): number {
   if (count === 0) return 0;
-  if (max <= 0) return 1;
-  const ratio = count / max;
-  if (ratio <= 0.25) return 1;
-  if (ratio <= 0.5) return 2;
-  if (ratio <= 0.75) return 3;
-  return 4;
+  if (count > thresholds[2]) return 4;
+  if (count > thresholds[1]) return 3;
+  if (count > thresholds[0]) return 2;
+  return 1;
 }
 
 export function Heatmap({ data, color = "#4ade80", label, compact = false }: HeatmapProps) {
-  const { weeks, monthLabels, maxCount, totalDays, totalContributions } = useMemo(() => {
+  const { weeks, monthLabels, thresholds, totalDays, totalContributions } = useMemo(() => {
     const today = new Date();
     const weeksCount = compact ? 26 : 52;
     const startDate = new Date(today);
@@ -62,11 +60,25 @@ export function Heatmap({ data, color = "#4ade80", label, compact = false }: Hea
     }
 
     if (currentWeek.length > 0) weeks.push(currentWeek);
+    
+    // Collect all non-zero counts from the visible date range only
+    const visibleCounts: number[] = [];
+    for (const week of weeks) {
+      for (const day of week) {
+        if (day.count > 0) visibleCounts.push(day.count);
+      }
+    }
+    visibleCounts.sort((a, b) => a - b);
 
-    const maxCount = Math.max(1, ...Object.values(data));
+    const thresholds = [
+      visibleCounts[Math.max(0, Math.floor(visibleCounts.length * 0.25) - 1)] || 0,
+      visibleCounts[Math.max(0, Math.floor(visibleCounts.length * 0.50) - 1)] || 0,
+      visibleCounts[Math.max(0, Math.floor(visibleCounts.length * 0.75) - 1)] || 0,
+    ];
 
-    return { weeks, monthLabels, maxCount, totalDays, totalContributions };
+    return { weeks, monthLabels, thresholds, totalDays, totalContributions };
   }, [data, compact]);
+
 
   const levelColors = [
     "#161616", // level 0 — no activity
@@ -135,7 +147,7 @@ export function Heatmap({ data, color = "#4ade80", label, compact = false }: Hea
                 width={cellSize}
                 height={cellSize}
                 rx={2}
-                fill={levelColors[getLevel(day.count, maxCount)]}
+                fill={levelColors[getLevel(day.count, thresholds)]}
               >
                 <title>{`${day.date}: ${day.count} contribution${day.count !== 1 ? "s" : ""}`}</title>
               </rect>
