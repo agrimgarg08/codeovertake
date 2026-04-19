@@ -1,0 +1,10 @@
+const mongoose = require('mongoose');
+
+const analyticsCacheSchema = new mongoose.Schema({
+  date: { type: String, required: true, unique: true, index: true },
+  data: { type: mongoose.Schema.Types.Mixed, required: true },
+}, {
+  timestamps: true,
+});
+
+module.exports = mongoose.model('AnalyticsCache', analyticsCacheSchema);

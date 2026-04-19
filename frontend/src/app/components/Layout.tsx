@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, Outlet, useLocation } from "react-router";
-import { Code2, Zap, Globe, Linkedin, Github, Swords, Menu, X } from "lucide-react";
+import { Code2, Zap, Globe, Linkedin, Github, Swords, BarChart3, Menu, X } from "lucide-react";
 
 export function Layout() {
   const location = useLocation();
@@ -10,7 +10,7 @@ export function Layout() {
     { to: "/", label: "Leaderboard", icon: null },
     { to: "/register", label: "Claim Spot", icon: <Zap className="h-3.5 w-3.5" /> },
     { to: "/headon", label: "HeadOn", icon: <Swords className="h-3.5 w-3.5" /> },
-    { to: "/analytics", label: "Analytics", icon: null },
+    { to: "/analytics", label: "Analytics", icon: <BarChart3 className="h-3.5 w-3.5" /> },
     { to: "/about", label: "About", icon: null },
   ];
 

@@ -309,7 +309,7 @@ export function Register() {
     <div className="mx-auto max-w-2xl overflow-x-hidden px-3 py-8 sm:px-6 sm:py-12 lg:px-8">
       {step === "search" ? (
         <div>
-          <h1 className="mb-2 font-['JetBrains_Mono'] text-2xl tracking-tight sm:text-3xl">Claim Your Spot</h1>
+          <h1 className="mb-2 font-['JetBrains_Mono'] text-2xl tracking-tight sm:text-3xl">Claim Your<span className="text-[#4ade80]"> Spot</span></h1>
           <p className="mb-6 text-sm text-[#666666] sm:mb-8">Find yourself and get ranked across 4 coding platforms</p>
 
           <div className="space-y-6">

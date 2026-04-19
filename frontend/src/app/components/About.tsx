@@ -7,8 +7,8 @@ export function About() {
       {/* Hero */}
       <div className="mb-16 text-center">
         <div className="mb-4 flex items-center justify-center gap-3">
-          <Code2 className="h-8 w-8 sm:h-10 sm:w-10" strokeWidth={1.5} />
-          <h1 className="font-['JetBrains_Mono'] text-3xl tracking-tight sm:text-4xl">CodeOvertake</h1>
+          <Code2 className="h-8 w-8 sm:h-10 sm:w-10 text-[#4ade80]" strokeWidth={1.5} />
+          <h1 className="font-['JetBrains_Mono'] text-3xl tracking-tight sm:text-4xl">Code<span className="text-[#4ade80]">Overtake</span></h1>
         </div>
         <p className="mx-auto max-w-xl font-['Archivo'] text-base leading-relaxed text-[#888888] sm:text-lg">
           The unified coding leaderboard for NSUT. Track your progress, compare with peers, and climb the ranks across every major platform.

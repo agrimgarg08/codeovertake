@@ -92,6 +92,7 @@ export interface AnalyticsOverview {
     linkedStudents: number;
     linkedPercentage: number;
     averageTotalScore: number;
+    medianTotalScore: number;
     maxTotalScore: number;
     averageDeltaFromPreviousSnapshot: number;
     latestSnapshotDate: string | null;
@@ -124,10 +125,27 @@ export interface AnalyticsOverview {
     overallRank: number | null;
   }>;
   registrationsTrend: Array<{ date: string; count: number }>;
+  platformEngagement: Array<{ platforms: number; count: number }>;
+  platformStatAverages: {
+    github: { avgRepos: number; avgStars: number; avgFollowers: number; avgContributions: number };
+    leetcode: { avgTotalSolved: number; avgEasySolved: number; avgMediumSolved: number; avgHardSolved: number; avgContestRating: number };
+    codeforces: { avgRating: number; avgMaxRating: number; avgProblemsSolved: number };
+    codechef: { avgCurrentRating: number; avgHighestRating: number; avgProblemsSolved: number };
+  };
+  topPerPlatform: Array<{
+    platform: string;
+    student: { rollno: string; name: string; username: string; score: number } | null;
+  }>;
+  scoreBellCurve: Array<{ score: number; students: number }>;
 }
 
-export async function fetchAnalyticsOverview() {
-  return request<AnalyticsOverview>("/analytics/overview");
+export async function fetchAnalyticsOverview(date?: string) {
+  const qs = date ? `?date=${encodeURIComponent(date)}` : "";
+  return request<AnalyticsOverview>(`/analytics/overview${qs}`);
+}
+
+export async function fetchAnalyticsDates() {
+  return request<{ dates: string[] }>("/analytics/dates");
 }
 
 // ---- Students ----

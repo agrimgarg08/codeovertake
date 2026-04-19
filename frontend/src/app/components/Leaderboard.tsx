@@ -290,7 +290,7 @@ export function Leaderboard() {
 
       {/* Page Title */}
       <h1 className="mb-6 font-['JetBrains_Mono'] text-2xl tracking-tight sm:mb-8 sm:text-3xl">
-        Coding Leaderboard
+        Coding <span className="text-[#4ade80]">Leaderboard</span>
       </h1>
 
       {/* Platform Tabs */}
