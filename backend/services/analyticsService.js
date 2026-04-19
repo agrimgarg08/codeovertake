@@ -2,7 +2,16 @@ const Student = require('../models/Student');
 const Snapshot = require('../models/Snapshot');
 
 const PLATFORM_KEYS = ['github', 'leetcode', 'codeforces', 'codechef'];
-const SCORE_BUCKETS = [0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 5000];
+// Total score is out of 4000, so 500-point bands provide an easy-to-read distribution.
+// Upper bucket bounds are exclusive in MongoDB $bucket, so 4001 ensures score 4000 is included.
+const SCORE_BUCKETS = [0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4001];
+const TOP_STUDENTS_LIMIT = 5;
+const PLATFORM_AVERAGE_KEY = {
+  github: 'averageGithub',
+  leetcode: 'averageLeetcode',
+  codeforces: 'averageCodeforces',
+  codechef: 'averageCodechef',
+};
 
 function round(value, digits = 2) {
   if (!Number.isFinite(value)) return 0;
@@ -92,7 +101,7 @@ async function getOverview() {
     ]),
     Student.find({})
       .sort({ 'scores.total': -1 })
-      .limit(5)
+      .limit(TOP_STUDENTS_LIMIT)
       .select('rollno name branch year scores.total ranks.overall'),
     Snapshot.aggregate([
       { $group: { _id: '$date' } },
@@ -140,6 +149,11 @@ async function getOverview() {
 
   const current = currentScoreAgg[0] || {};
   const platformCoverage = platformCoverageAgg[0] || {};
+  const scoreDistributionMap = new Map(
+    scoreDistribution
+      .filter((item) => item._id !== 'unknown')
+      .map((item) => [item._id, item.count]),
+  );
 
   const latestTrend = trend[trend.length - 1];
   const previousTrend = trend[trend.length - 2];
@@ -160,7 +174,7 @@ async function getOverview() {
       platform: key,
       linkedCount: platformCoverage[key] || 0,
       linkedPercentage: totalStudents ? round(((platformCoverage[key] || 0) / totalStudents) * 100) : 0,
-      averageScore: round(current[`average${key.charAt(0).toUpperCase()}${key.slice(1)}`] || 0),
+      averageScore: round(current[PLATFORM_AVERAGE_KEY[key]] || 0),
     })),
     branchDistribution: branchDistribution.map((item) => ({
       branch: item._id,
@@ -173,11 +187,10 @@ async function getOverview() {
       averageScore: round(item.averageScore || 0),
     })),
     scoreDistribution: SCORE_BUCKETS.slice(0, -1).map((start, index) => {
-      const end = SCORE_BUCKETS[index + 1] - 1;
-      const bucket = scoreDistribution.find((item) => item._id === start);
+      const endExclusive = SCORE_BUCKETS[index + 1];
       return {
-        range: `${start}-${end}`,
-        count: bucket?.count || 0,
+        range: `${start} to <${endExclusive}`,
+        count: scoreDistributionMap.get(start) || 0,
       };
     }),
     trend: trend.map((item) => ({

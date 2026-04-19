@@ -204,7 +204,7 @@ export function Analytics() {
               <div className="mb-1 truncate text-sm">{student.name}</div>
               <div className="font-['JetBrains_Mono'] text-xs text-[#666666]">{student.rollno}</div>
               <div className="mt-2 font-['JetBrains_Mono'] text-[#4ade80]">{student.totalScore}</div>
-              <div className="text-xs text-[#888888]">Rank #{student.overallRank ?? "—"}</div>
+              <div className="text-xs text-[#888888]">Rank #{student.overallRank ?? "N/A"}</div>
             </Link>
           ))}
         </div>
