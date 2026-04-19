@@ -10,6 +10,7 @@ export function Layout() {
     { to: "/", label: "Leaderboard", icon: null },
     { to: "/register", label: "Claim Spot", icon: <Zap className="h-3.5 w-3.5" /> },
     { to: "/headon", label: "HeadOn", icon: <Swords className="h-3.5 w-3.5" /> },
+    { to: "/analytics", label: "Analytics", icon: null },
     { to: "/about", label: "About", icon: null },
   ];
 
@@ -112,6 +113,7 @@ export function Layout() {
                 <Link to="/" className="text-[#888888] transition-colors hover:text-white">Leaderboard</Link>
                 <Link to="/register" className="text-[#888888] transition-colors hover:text-white">Register</Link>
                 <Link to="/about" className="text-[#888888] transition-colors hover:text-white">About</Link>
+                <Link to="/analytics" className="text-[#888888] transition-colors hover:text-white">Analytics</Link>
               </div>
             </div>
 

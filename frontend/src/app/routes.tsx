@@ -5,6 +5,7 @@ import { Register } from "./components/Register";
 import { StudentProfile } from "./components/StudentProfile";
 import { About } from "./components/About";
 import { HeadOn } from "./components/HeadOn";
+import { Analytics } from "./components/Analytics";
 
 export const router = createBrowserRouter([
   {
@@ -15,6 +16,7 @@ export const router = createBrowserRouter([
       { path: "register", Component: Register },
       { path: "student/:rollNo", Component: StudentProfile },
       { path: "headon", Component: HeadOn },
+      { path: "analytics", Component: Analytics },
       { path: "about", Component: About },
     ],
   },

@@ -128,6 +128,7 @@ Runs on `http://localhost:5173`.
 | GET | `/api/leaderboard/:platform` | Platform-specific leaderboard |
 | GET | `/api/leaderboard/filters` | Available filter options (years, branches) |
 | GET | `/api/leaderboard/top-gainers` | Top score gainers between snapshots |
+| GET | `/api/analytics/overview` | Aggregated analytics across students and snapshots |
 | POST | `/api/admin/update` | Manually trigger data refresh |
 
 ## Scoring System
