@@ -84,6 +84,52 @@ export async function fetchFilters() {
   }>("/leaderboard/filters");
 }
 
+// ---- Analytics ----
+
+export interface AnalyticsOverview {
+  summary: {
+    totalStudents: number;
+    linkedStudents: number;
+    linkedPercentage: number;
+    averageTotalScore: number;
+    maxTotalScore: number;
+    averageDeltaFromPreviousSnapshot: number;
+    latestSnapshotDate: string | null;
+  };
+  platformCoverage: Array<{
+    platform: "github" | "leetcode" | "codeforces" | "codechef";
+    linkedCount: number;
+    linkedPercentage: number;
+    averageScore: number;
+  }>;
+  branchDistribution: Array<{ branch: string; count: number; averageScore: number }>;
+  yearDistribution: Array<{ year: number; count: number; averageScore: number }>;
+  scoreDistribution: Array<{ range: string; count: number }>;
+  trend: Array<{
+    date: string;
+    avgTotal: number;
+    maxTotal: number;
+    avgGithub: number;
+    avgLeetcode: number;
+    avgCodeforces: number;
+    avgCodechef: number;
+    students: number;
+  }>;
+  topStudents: Array<{
+    rollno: string;
+    name: string;
+    branch: string;
+    year: number;
+    totalScore: number;
+    overallRank: number | null;
+  }>;
+  registrationsTrend: Array<{ date: string; count: number }>;
+}
+
+export async function fetchAnalyticsOverview() {
+  return request<AnalyticsOverview>("/analytics/overview");
+}
+
 // ---- Students ----
 
 export async function searchStudents(q: string) {

@@ -6,6 +6,7 @@ const { errorHandler } = require('./middlewares');
 const studentRoutes = require('./routes/students');
 const leaderboardRoutes = require('./routes/leaderboard');
 const adminRoutes = require('./routes/admin');
+const analyticsRoutes = require('./routes/analytics');
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use(express.json());
 app.use('/api/students', studentRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
