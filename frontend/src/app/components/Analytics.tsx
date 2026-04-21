@@ -4,13 +4,7 @@ import { Activity, BarChart3, Calendar, Crown, Hash, Info, Link2, Target, Trophy
 import { AreaChart, Area, BarChart, Bar, CartesianGrid, LineChart, Line, PieChart, Pie, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis, Legend } from "recharts";
 import { fetchAnalyticsOverview, fetchAnalyticsDates, type AnalyticsOverview } from "../api";
 import { GithubIcon, LeetcodeIcon, CodeforcesIcon, CodechefIcon } from "./PlatformIcons";
-
-const platformColors: Record<string, string> = {
-  github: "#4ade80",
-  leetcode: "#f59e0b",
-  codeforces: "#60a5fa",
-  codechef: "#a78bfa",
-};
+import { platformColors, engagementColors, CustomChartTooltip, useChartFocus, formatChartDate } from "./ChartUtils";
 
 const platformIcons: Record<string, React.ReactNode> = {
   github: <span className="inline-block h-4 w-4"><GithubIcon /></span>,
@@ -20,11 +14,6 @@ const platformIcons: Record<string, React.ReactNode> = {
 };
 
 const pieColors = ["#4ade80", "#22c55e", "#16a34a", "#15803d", "#14532d", "#84cc16"];
-const engagementColors = ["#333333", "#f59e0b", "#60a5fa", "#a78bfa", "#4ade80"];
-
-const tooltipStyle = { backgroundColor: "#0f0f0f", border: "1px solid #1e1e1e", color: "#fff" };
-const tooltipLabelStyle = { color: "#ccc" };
-const tooltipItemStyle = { color: "#fff" };
 
 export function Analytics() {
   const [data, setData] = useState<AnalyticsOverview | null>(null);
@@ -32,12 +21,17 @@ export function Analytics() {
   const [error, setError] = useState("");
   const [availableDates, setAvailableDates] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>("");
+  const {
+    activeLine: activeTrendLine,
+    handleLegendClick: handleTrendLegendClick,
+    legendFormatter: trendLegendFormatter
+  } = useChartFocus();
 
   // Load available dates once
   useEffect(() => {
     fetchAnalyticsDates()
       .then((res) => setAvailableDates(res.dates))
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   // Fetch analytics for selected date (or today)
@@ -107,6 +101,16 @@ export function Analytics() {
 
   const platformStatCards = [
     {
+      platform: "github",
+      label: "GitHub",
+      stats: [
+        { label: "Avg Repos", value: data.platformStatAverages.github.avgRepos },
+        { label: "Avg Stars", value: data.platformStatAverages.github.avgStars },
+        { label: "Avg Followers", value: data.platformStatAverages.github.avgFollowers },
+        { label: "Avg Contributions", value: data.platformStatAverages.github.avgContributions },
+      ],
+    },
+    {
       platform: "leetcode",
       label: "LeetCode",
       stats: [
@@ -133,16 +137,6 @@ export function Analytics() {
         { label: "Avg Rating", value: data.platformStatAverages.codechef.avgCurrentRating },
         { label: "Avg Max Rating", value: data.platformStatAverages.codechef.avgHighestRating },
         { label: "Avg Solved", value: data.platformStatAverages.codechef.avgProblemsSolved },
-      ],
-    },
-    {
-      platform: "github",
-      label: "GitHub",
-      stats: [
-        { label: "Avg Repos", value: data.platformStatAverages.github.avgRepos },
-        { label: "Avg Stars", value: data.platformStatAverages.github.avgStars },
-        { label: "Avg Followers", value: data.platformStatAverages.github.avgFollowers },
-        { label: "Avg Contributions", value: data.platformStatAverages.github.avgContributions },
       ],
     },
   ];
@@ -221,16 +215,88 @@ export function Analytics() {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={trendData}>
                 <CartesianGrid stroke="#1e1e1e" strokeDasharray="3 3" />
-                <XAxis dataKey="date" tick={{ fill: "#888888", fontSize: 12 }} />
+                <XAxis 
+                  dataKey="date" 
+                  tick={{ fill: "#888888", fontSize: 12 }} 
+                  tickFormatter={(d) => new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                />
                 <YAxis tick={{ fill: "#888888", fontSize: 12 }} />
-                <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} />
-                <Legend />
-                <Line type="monotone" dataKey="avgTotal" stroke="#4ade80" strokeWidth={2} dot={false} name="Avg Total" />
-                <Line type="monotone" dataKey="maxTotal" stroke="#8884d8" strokeWidth={2} dot={false} name="Top Total" />
-                <Line type="monotone" dataKey="avgGithub" stroke={platformColors.github} strokeWidth={1} dot={false} name="Avg GitHub" strokeDasharray="4 2" />
-                <Line type="monotone" dataKey="avgLeetcode" stroke={platformColors.leetcode} strokeWidth={1} dot={false} name="Avg LeetCode" strokeDasharray="4 2" />
-                <Line type="monotone" dataKey="avgCodeforces" stroke={platformColors.codeforces} strokeWidth={1} dot={false} name="Avg Codeforces" strokeDasharray="4 2" />
-                <Line type="monotone" dataKey="avgCodechef" stroke={platformColors.codechef} strokeWidth={1} dot={false} name="Avg CodeChef" strokeDasharray="4 2" />
+                <Tooltip content={<CustomChartTooltip activeLine={activeTrendLine} labelFormatter={formatChartDate} />} />
+                <Legend
+                  onClick={handleTrendLegendClick}
+                  formatter={trendLegendFormatter}
+                  wrapperStyle={{ fontSize: "12px", fontFamily: "JetBrains Mono", cursor: "pointer" }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="maxTotal"
+                  stroke="#ffffff"
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={(!activeTrendLine || activeTrendLine === "maxTotal") ? { r: 4 } : false}
+                  name="Top Total"
+                  strokeOpacity={activeTrendLine && activeTrendLine !== "maxTotal" ? 0.3 : 1}
+                  style={{ transition: "stroke-opacity 0.2s ease-in-out" }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="avgTotal"
+                  stroke="#ff8594"
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={(!activeTrendLine || activeTrendLine === "avgTotal") ? { r: 4 } : false}
+                  name="Avg Total"
+                  strokeOpacity={activeTrendLine && activeTrendLine !== "avgTotal" ? 0.3 : 1}
+                  style={{ transition: "stroke-opacity 0.2s ease-in-out" }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="avgGithub"
+                  stroke={platformColors.github}
+                  strokeWidth={1}
+                  dot={false}
+                  activeDot={(!activeTrendLine || activeTrendLine === "avgGithub") ? { r: 3 } : false}
+                  name="Avg GitHub"
+                  strokeDasharray="4 2"
+                  strokeOpacity={activeTrendLine && activeTrendLine !== "avgGithub" ? 0.1 : 1}
+                  style={{ transition: "stroke-opacity 0.2s ease-in-out" }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="avgLeetcode"
+                  stroke={platformColors.leetcode}
+                  strokeWidth={1}
+                  dot={false}
+                  activeDot={(!activeTrendLine || activeTrendLine === "avgLeetcode") ? { r: 3 } : false}
+                  name="Avg LeetCode"
+                  strokeDasharray="4 2"
+                  strokeOpacity={activeTrendLine && activeTrendLine !== "avgLeetcode" ? 0.1 : 1}
+                  style={{ transition: "stroke-opacity 0.2s ease-in-out" }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="avgCodeforces"
+                  stroke={platformColors.codeforces}
+                  strokeWidth={1}
+                  dot={false}
+                  activeDot={(!activeTrendLine || activeTrendLine === "avgCodeforces") ? { r: 3 } : false}
+                  name="Avg Codeforces"
+                  strokeDasharray="4 2"
+                  strokeOpacity={activeTrendLine && activeTrendLine !== "avgCodeforces" ? 0.1 : 1}
+                  style={{ transition: "stroke-opacity 0.2s ease-in-out" }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="avgCodechef"
+                  stroke={platformColors.codechef}
+                  strokeWidth={1}
+                  dot={false}
+                  activeDot={(!activeTrendLine || activeTrendLine === "avgCodechef") ? { r: 3 } : false}
+                  name="Avg CodeChef"
+                  strokeDasharray="4 2"
+                  strokeOpacity={activeTrendLine && activeTrendLine !== "avgCodechef" ? 0.1 : 1}
+                  style={{ transition: "stroke-opacity 0.2s ease-in-out" }}
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -245,13 +311,14 @@ export function Analytics() {
                 <XAxis dataKey="platform" tick={{ fill: "#888888", fontSize: 12 }} />
                 <YAxis tick={{ fill: "#888888", fontSize: 12 }} />
                 <Tooltip
-                  contentStyle={tooltipStyle}
-                  labelStyle={tooltipLabelStyle}
-                  itemStyle={tooltipItemStyle}
-                  formatter={(value: number, name: string, props: any) => {
-                    const entry = props.payload;
-                    return [`${value} (${entry.linkedPercentage}%) — avg score: ${entry.averageScore}`, name];
-                  }}
+                  cursor={{ fill: 'rgba(255, 255, 255, 0.05)', radius: 4 }}
+                  content={
+                    <CustomChartTooltip
+                      valueFormatter={(val: number, payload: any) =>
+                        `${val} (${payload.linkedPercentage}%) — avg: ${payload.averageScore}`
+                      }
+                    />
+                  }
                 />
                 <Bar dataKey="linkedCount" name="Linked Students" radius={[6, 6, 0, 0]}>
                   {coverageData.map((entry) => (
@@ -279,10 +346,12 @@ export function Analytics() {
                 />
                 <YAxis tick={{ fill: "#888888", fontSize: 12 }} />
                 <Tooltip
-                  contentStyle={tooltipStyle}
-                  labelStyle={tooltipLabelStyle}
-                  itemStyle={tooltipItemStyle}
-                  labelFormatter={(v) => `${v} platform${v !== 1 ? "s" : ""} linked`}
+                  cursor={{ fill: 'rgba(255, 255, 255, 0.05)', radius: 4 }}
+                  content={
+                    <CustomChartTooltip
+                      labelFormatter={(v: any) => `${v} platform${v !== 1 ? "s" : ""} linked`}
+                    />
+                  }
                 />
                 <Bar dataKey="count" name="Students" radius={[6, 6, 0, 0]}>
                   {engagementData.map((entry) => (
@@ -302,8 +371,8 @@ export function Analytics() {
                 <CartesianGrid stroke="#1e1e1e" strokeDasharray="3 3" />
                 <XAxis dataKey="range" tick={{ fill: "#888888", fontSize: 11 }} interval={0} angle={-20} textAnchor="end" height={60} />
                 <YAxis tick={{ fill: "#888888", fontSize: 12 }} />
-                <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} />
-                <Bar dataKey="count" fill="#4ade80" radius={[6, 6, 0, 0]} />
+                <Tooltip cursor={{ fill: 'rgba(255, 255, 255, 0.05)', radius: 4 }} content={<CustomChartTooltip />} />
+                <Bar dataKey="count" fill="#ff8594" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -321,20 +390,23 @@ export function Analytics() {
                   <CartesianGrid stroke="#1e1e1e" strokeDasharray="3 3" />
                   <XAxis type="number" tick={{ fill: "#888888", fontSize: 12 }} />
                   <YAxis dataKey="branch" type="category" tick={{ fill: "#888888", fontSize: 11 }} width={80} interval={0} />
-                <Tooltip
-                  contentStyle={tooltipStyle}
-                  labelStyle={tooltipLabelStyle}
-                  itemStyle={tooltipItemStyle}
-                  formatter={(value: number, name: string, props: any) => {
-                    if (name === "Count") return [value, name];
-                    return [`${value}`, name];
-                  }}
-                />
-                <Legend />
-                <Bar dataKey="count" fill="#60a5fa" name="Count" radius={[0, 6, 6, 0]} />
-                <Bar dataKey="averageScore" fill="#f59e0b" name="Avg Score" radius={[0, 6, 6, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+                  <Tooltip cursor={{ fill: 'rgba(255, 255, 255, 0.05)', radius: 4 }} content={<CustomChartTooltip />} />
+                  <Bar dataKey="count" fill="#60a5fa" name="Count" radius={[0, 6, 6, 0]} />
+                  <Bar dataKey="averageScore" fill="#f59e0b" name="Avg Score" radius={[0, 6, 6, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Pinned Legend at bottom */}
+          <div className="mt-4 flex justify-center gap-6 font-['JetBrains_Mono'] text-[10px] sm:text-xs">
+            <div className="flex items-center gap-2">
+              <div className="h-3 w-3 rounded-sm bg-[#60a5fa]"></div>
+              <span className="text-[#888888]">Count</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="h-3 w-3 rounded-sm bg-[#f59e0b]"></div>
+              <span className="text-[#888888]">Avg Score</span>
             </div>
           </div>
         </div>
@@ -347,17 +419,23 @@ export function Analytics() {
                 <CartesianGrid stroke="#1e1e1e" strokeDasharray="3 3" />
                 <XAxis dataKey="year" tick={{ fill: "#888888", fontSize: 12 }} />
                 <YAxis tick={{ fill: "#888888", fontSize: 12 }} />
-                <Tooltip
-                  contentStyle={tooltipStyle}
-                  labelStyle={tooltipLabelStyle}
-                  itemStyle={tooltipItemStyle}
-                  formatter={(value: number, name: string) => [value, name]}
-                />
-                <Legend />
+                <Tooltip cursor={{ fill: 'rgba(255, 255, 255, 0.05)', radius: 4 }} content={<CustomChartTooltip />} />
                 <Bar dataKey="count" fill="#60a5fa" name="Students" radius={[6, 6, 0, 0]} />
                 <Bar dataKey="averageScore" fill="#f59e0b" name="Avg Score" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
+          </div>
+
+          {/* Pinned Legend at bottom */}
+          <div className="mt-4 flex justify-center gap-6 font-['JetBrains_Mono'] text-[10px] sm:text-xs">
+            <div className="flex items-center gap-2">
+              <div className="h-3 w-3 rounded-sm bg-[#60a5fa]"></div>
+              <span className="text-[#888888]">Students</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="h-3 w-3 rounded-sm bg-[#f59e0b]"></div>
+              <span className="text-[#888888]">Avg Score</span>
+            </div>
           </div>
         </div>
       </div>
@@ -373,10 +451,13 @@ export function Analytics() {
                 <XAxis dataKey="score" tick={{ fill: "#888888", fontSize: 11 }} />
                 <YAxis tick={{ fill: "#888888", fontSize: 12 }} />
                 <Tooltip
-                  contentStyle={tooltipStyle}                  labelStyle={tooltipLabelStyle}
-                  itemStyle={tooltipItemStyle}                  labelFormatter={(v) => `Score: ${v}–${Number(v) + 100}`}
+                  content={
+                    <CustomChartTooltip
+                      labelFormatter={(v: any) => `Score: ${v}–${Number(v) + 100}`}
+                    />
+                  }
                 />
-                <Area type="monotone" dataKey="students" stroke="#a78bfa" fill="#a78bfa" fillOpacity={0.25} strokeWidth={2} name="Students" />
+                <Area type="monotone" dataKey="students" stroke="#ff8594" fill="#ff8594" fillOpacity={0.25} strokeWidth={2} name="Students" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -414,7 +495,7 @@ export function Analytics() {
 
         <div className="rounded border border-[#1e1e1e] bg-[#111111] p-4">
           <h2 className="mb-4 flex items-center gap-2 font-['JetBrains_Mono'] text-sm uppercase tracking-wider text-[#888888]">
-            <Crown className="h-4 w-4 text-[#a78bfa]" />
+            <Crown className="h-4 w-4 text-[#ff8594]" />
             Top Per Platform
           </h2>
           <div className="grid gap-2">
