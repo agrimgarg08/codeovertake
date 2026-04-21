@@ -6,6 +6,7 @@ import { platforms, type Platform } from "../mockData";
 import { fetchStudent, fetchStudentHistory, updateUsernames as apiUpdateUsernames, restoreUsernames as apiRestoreUsernames, fetchHeatmap, validatePlatformUsername, fetchStudentResults, type StudentResults } from "../api";
 import { GithubIcon, LeetcodeIcon, CodeforcesIcon, CodechefIcon } from "./PlatformIcons";
 import { Heatmap, CombinedHeatmap } from "./Heatmap";
+import { platformColors, CustomChartTooltip, useChartFocus, formatChartDate } from "./ChartUtils";
 
 export function StudentProfile() {
   const { rollNo } = useParams<{ rollNo: string }>();
@@ -28,6 +29,16 @@ export function StudentProfile() {
     codeforces: "",
     codechef: "",
   });
+  const { 
+    activeLine: activeScoreLine, 
+    handleLegendClick: handleScoreLegendClick,
+    legendFormatter: scoreLegendFormatter
+  } = useChartFocus();
+  const { 
+    activeLine: activeRankLine, 
+    handleLegendClick: handleRankLegendClick,
+    legendFormatter: rankLegendFormatter 
+  } = useChartFocus();
   const editSectionRef = useRef<HTMLDivElement>(null);
 
   // Platform validation state (like Register)
@@ -124,7 +135,7 @@ export function StudentProfile() {
           }))
         );
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [rollNo]);
 
   // Fetch heatmap data
@@ -132,7 +143,7 @@ export function StudentProfile() {
     if (!rollNo) return;
     fetchHeatmap(rollNo)
       .then((data) => setHeatmapData(data))
-      .catch(() => {});
+      .catch(() => { });
   }, [rollNo]);
 
   // Fetch results (CGPA) data
@@ -163,7 +174,7 @@ export function StudentProfile() {
     const url = window.location.href;
     const text = `Check out ${student.name}'s coding profile on CodeOvertake — ranked #${student.ranks?.overall ?? "??"}!`;
     if (navigator.share) {
-      navigator.share({ title: "CodeOvertake Profile", text, url }).catch(() => {});
+      navigator.share({ title: "CodeOvertake Profile", text, url }).catch(() => { });
     } else {
       navigator.clipboard.writeText(url);
       alert("Profile link copied!");
@@ -637,14 +648,14 @@ export function StudentProfile() {
             )}
             {!isEditing && (
               <div className="flex items-center gap-3">
-                  {editCooldown !== null && editCooldown > 0 && (
-                    <div
-                      className="flex items-center gap-1 rounded bg-[#1e1e1e] px-2 py-1 text-xs text-[#888888]"
-                    >
-                      <Clock className="h-3 w-3" />
-                      {editCooldown}h cooldown
-                    </div>
-                  )}
+                {editCooldown !== null && editCooldown > 0 && (
+                  <div
+                    className="flex items-center gap-1 rounded bg-[#1e1e1e] px-2 py-1 text-xs text-[#888888]"
+                  >
+                    <Clock className="h-3 w-3" />
+                    {editCooldown}h cooldown
+                  </div>
+                )}
                 <button
                   onClick={startEditing}
                   disabled={editCooldown !== null && editCooldown > 0}
@@ -707,13 +718,12 @@ export function StudentProfile() {
                         validatePlatform(platform, extracted);
                       }}
                       style={{ paddingLeft: `calc(12px + ${prefix.length}ch)` }}
-                      className={`h-10 w-full rounded border bg-[#0a0a0a] pr-10 font-['JetBrains_Mono'] text-xs text-white placeholder-[#555555] outline-none transition-all focus:shadow-lg focus:shadow-white/5 ${
-                        platformValidation[platform]?.status === "valid"
-                          ? "border-[#4ade80] focus:border-[#4ade80]"
-                          : platformValidation[platform]?.status === "invalid"
+                      className={`h-10 w-full rounded border bg-[#0a0a0a] pr-10 font-['JetBrains_Mono'] text-xs text-white placeholder-[#555555] outline-none transition-all focus:shadow-lg focus:shadow-white/5 ${platformValidation[platform]?.status === "valid"
+                        ? "border-[#4ade80] focus:border-[#4ade80]"
+                        : platformValidation[platform]?.status === "invalid"
                           ? "border-[#ff4444] focus:border-[#ff4444]"
                           : "border-[#1e1e1e] focus:border-[#333333]"
-                      }`}
+                        }`}
                     />
                     {/* Validation indicator */}
                     {editData[platform].trim() && (
@@ -779,19 +789,19 @@ export function StudentProfile() {
         )}
 
         {/* Username History */}
-          {showHistory && student.usernameHistory && (
-            <div
-              className="mt-6 space-y-3 border-t border-[#1e1e1e] pt-6"
-            >
-              <div className="flex items-center justify-between">
-                <h4 className="font-['JetBrains_Mono'] text-sm text-[#888888]">Edit History</h4>
-                <span className="text-xs text-[#666666]">Last {student.usernameHistory.length} entries</span>
-              </div>
-              {student.usernameHistory.map((entry: any, idx: number) => (
-                <div
-                  key={idx}
-                  className="rounded border border-[#1e1e1e] bg-[#0a0a0a] p-4"
-                >
+        {showHistory && student.usernameHistory && (
+          <div
+            className="mt-6 space-y-3 border-t border-[#1e1e1e] pt-6"
+          >
+            <div className="flex items-center justify-between">
+              <h4 className="font-['JetBrains_Mono'] text-sm text-[#888888]">Edit History</h4>
+              <span className="text-xs text-[#666666]">Last {student.usernameHistory.length} entries</span>
+            </div>
+            {student.usernameHistory.map((entry: any, idx: number) => (
+              <div
+                key={idx}
+                className="rounded border border-[#1e1e1e] bg-[#0a0a0a] p-4"
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-xs text-[#666666]">
                     <Clock className="h-3 w-3" />
@@ -819,8 +829,8 @@ export function StudentProfile() {
                 </div>
               </div>
             ))}
-            </div>
-          )}
+          </div>
+        )}
       </div>
 
       {/* Score History Chart */}
@@ -836,39 +846,84 @@ export function StudentProfile() {
               <div className="mt-1 text-xs">Graph will appear once more data points are collected.</div>
             </div>
           ) : (
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={scoreHistory}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e1e1e" />
-              <XAxis
-                dataKey="date"
-                stroke="#888888"
-                style={{ fontSize: "12px", fontFamily: "JetBrains Mono" }}
-                tickFormatter={(date) => new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-              />
-              <YAxis stroke="#888888" style={{ fontSize: "12px", fontFamily: "JetBrains Mono" }} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#111111",
-                  border: "1px solid #1e1e1e",
-                  borderRadius: "4px",
-                  fontFamily: "JetBrains Mono",
-                  fontSize: "12px",
-                }}
-                labelStyle={{ color: "#888888" }}
-              />
-              <Legend
-                wrapperStyle={{
-                  fontFamily: "JetBrains Mono",
-                  fontSize: "12px",
-                }}
-              />
-              <Line type="monotone" dataKey="total" stroke="#4ade80" strokeWidth={2} name="Total" />
-              <Line type="monotone" dataKey="github" stroke="#86efac" strokeWidth={1.5} strokeOpacity={0.6} name="GitHub" />
-              <Line type="monotone" dataKey="leetcode" stroke="#ffa116" strokeWidth={1.5} name="LeetCode" />
-              <Line type="monotone" dataKey="codeforces" stroke="#1f8acb" strokeWidth={1.5} name="Codeforces" />
-              <Line type="monotone" dataKey="codechef" stroke="#5b4638" strokeWidth={1.5} name="CodeChef" />
-            </LineChart>
-          </ResponsiveContainer>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={scoreHistory}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e1e1e" />
+                <XAxis
+                  dataKey="date"
+                  stroke="#888888"
+                  style={{ fontSize: "12px", fontFamily: "JetBrains Mono" }}
+                  tickFormatter={(d) => new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                />
+                <YAxis stroke="#888888" style={{ fontSize: "12px", fontFamily: "JetBrains Mono" }} />
+                <Tooltip
+                  content={<CustomChartTooltip activeLine={activeScoreLine} labelFormatter={formatChartDate} />}
+                />
+                <Legend
+                  wrapperStyle={{
+                    fontFamily: "JetBrains Mono",
+                    fontSize: "12px",
+                  }}
+                  onClick={handleScoreLegendClick}
+                  formatter={scoreLegendFormatter}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="total"
+                  stroke="#ffffff"
+                  strokeWidth={2}
+                  name="Total"
+                  dot={false}
+                  activeDot={!activeScoreLine || activeScoreLine === "total"}
+                  strokeOpacity={activeScoreLine && activeScoreLine !== "total" ? 0.1 : 1}
+                  style={{ transition: "stroke-opacity 0.2s ease-in-out" }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="github"
+                  stroke={platformColors.github}
+                  strokeWidth={1.5}
+                  name="GitHub"
+                  dot={false}
+                  activeDot={(!activeScoreLine || activeScoreLine === "github") ? { r: 3 } : false}
+                  strokeOpacity={activeScoreLine && activeScoreLine !== "github" ? 0.1 : 1}
+                  style={{ transition: "stroke-opacity 0.2s ease-in-out" }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="leetcode"
+                  stroke={platformColors.leetcode}
+                  strokeWidth={1.5}
+                  name="LeetCode"
+                  dot={false}
+                  activeDot={(!activeScoreLine || activeScoreLine === "leetcode") ? { r: 3 } : false}
+                  strokeOpacity={activeScoreLine && activeScoreLine !== "leetcode" ? 0.1 : 1}
+                  style={{ transition: "stroke-opacity 0.2s ease-in-out" }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="codeforces"
+                  stroke={platformColors.codeforces}
+                  strokeWidth={1.5}
+                  name="Codeforces"
+                  dot={false}
+                  activeDot={(!activeScoreLine || activeScoreLine === "codeforces") ? { r: 3 } : false}
+                  strokeOpacity={activeScoreLine && activeScoreLine !== "codeforces" ? 0.1 : 1}
+                  style={{ transition: "stroke-opacity 0.2s ease-in-out" }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="codechef"
+                  stroke={platformColors.codechef}
+                  strokeWidth={1.5}
+                  name="CodeChef"
+                  dot={false}
+                  activeDot={(!activeScoreLine || activeScoreLine === "codechef") ? { r: 3 } : false}
+                  strokeOpacity={activeScoreLine && activeScoreLine !== "codechef" ? 0.1 : 1}
+                  style={{ transition: "stroke-opacity 0.2s ease-in-out" }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
           )}
         </div>
       )}
@@ -884,7 +939,7 @@ export function StudentProfile() {
                 dataKey="date"
                 stroke="#888888"
                 style={{ fontSize: "12px", fontFamily: "JetBrains Mono" }}
-                tickFormatter={(date) => new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                tickFormatter={(d) => new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
               />
               <YAxis
                 reversed
@@ -894,20 +949,49 @@ export function StudentProfile() {
                 tickFormatter={(v) => `#${v}`}
               />
               <Tooltip
-                contentStyle={{
-                  backgroundColor: "#111111",
-                  border: "1px solid #1e1e1e",
-                  borderRadius: "4px",
-                  fontFamily: "JetBrains Mono",
-                  fontSize: "12px",
-                }}
-                labelStyle={{ color: "#888888" }}
-                formatter={(value: any) => [`#${value}`, undefined]}
+                content={<CustomChartTooltip activeLine={activeRankLine} isRank={true} labelFormatter={formatChartDate} />}
               />
-              <Legend wrapperStyle={{ fontFamily: "JetBrains Mono", fontSize: "12px" }} />
-              <Line type="monotone" dataKey="rankOverall" stroke="#4ade80" strokeWidth={2} name="Overall" dot={false} connectNulls />
-              <Line type="monotone" dataKey="rankYear" stroke="#60a5fa" strokeWidth={1.5} name="Year" dot={false} connectNulls />
-              <Line type="monotone" dataKey="rankBranch" stroke="#f472b6" strokeWidth={1.5} name="Branch" dot={false} connectNulls />
+              <Legend
+                wrapperStyle={{ fontFamily: "JetBrains Mono", fontSize: "12px" }}
+                onClick={handleRankLegendClick}
+                formatter={rankLegendFormatter}
+              />
+              <Line
+                type="monotone"
+                dataKey="rankOverall"
+                stroke="#4ade80"
+                strokeWidth={2}
+                name="Overall"
+                dot={false}
+                connectNulls
+                activeDot={(!activeRankLine || activeRankLine === "rankOverall") ? { r: 4 } : false}
+                strokeOpacity={activeRankLine && activeRankLine !== "rankOverall" ? 0.1 : 1}
+                style={{ transition: "stroke-opacity 0.2s ease-in-out" }}
+              />
+              <Line
+                type="monotone"
+                dataKey="rankYear"
+                stroke="#60a5fa"
+                strokeWidth={1.5}
+                name="Year"
+                dot={false}
+                connectNulls
+                activeDot={(!activeRankLine || activeRankLine === "rankYear") ? { r: 3 } : false}
+                strokeOpacity={activeRankLine && activeRankLine !== "rankYear" ? 0.1 : 1}
+                style={{ transition: "stroke-opacity 0.2s ease-in-out" }}
+              />
+              <Line
+                type="monotone"
+                dataKey="rankBranch"
+                stroke="#f472b6"
+                strokeWidth={1.5}
+                name="Branch"
+                dot={false}
+                connectNulls
+                activeDot={(!activeRankLine || activeRankLine === "rankBranch") ? { r: 3 } : false}
+                strokeOpacity={activeRankLine && activeRankLine !== "rankBranch" ? 0.1 : 1}
+                style={{ transition: "stroke-opacity 0.2s ease-in-out" }}
+              />
             </LineChart>
           </ResponsiveContainer>
           <p className="mt-3 text-center font-['JetBrains_Mono'] text-xs text-[#666666]">Lower is better — #1 is top</p>
@@ -931,17 +1015,17 @@ export function StudentProfile() {
           <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-3">
             {heatmapData.github && (
               <div className="rounded border border-[#1e1e1e] bg-[#111111] p-3 sm:p-4">
-                <Heatmap data={heatmapData.github} label="GitHub" compact color="#4ade80" />
+                <Heatmap data={heatmapData.github} label="GitHub" compact color={platformColors.github} />
               </div>
             )}
             {heatmapData.leetcode && (
               <div className="rounded border border-[#1e1e1e] bg-[#111111] p-3 sm:p-4">
-                <Heatmap data={heatmapData.leetcode} label="LeetCode" compact color="#ffa116" />
+                <Heatmap data={heatmapData.leetcode} label="LeetCode" compact color={platformColors.leetcode} />
               </div>
             )}
             {heatmapData.codeforces && (
               <div className="rounded border border-[#1e1e1e] bg-[#111111] p-3 sm:p-4">
-                <Heatmap data={heatmapData.codeforces} label="Codeforces" compact color="#1f8acb" />
+                <Heatmap data={heatmapData.codeforces} label="Codeforces" compact color={platformColors.codeforces} />
               </div>
             )}
           </div>
@@ -975,13 +1059,9 @@ export function StudentProfile() {
   );
 }
 
-const PLATFORM_COLORS: Record<string, string> = {
-  github: "#4ade80",
-  leetcode: "#ffa116",
-  codeforces: "#1f8acb",
-};
-
 function MomentumChart({ heatmapData }: { heatmapData: Record<string, Record<string, number>> }) {
+  const { activeLine, handleLegendClick, legendFormatter } = useChartFocus();
+
   const chartData = useMemo(() => {
     // Merge all platforms into one date→count map, and keep per-platform too
     const merged: Record<string, number> = {};
@@ -1033,10 +1113,10 @@ function MomentumChart({ heatmapData }: { heatmapData: Record<string, Record<str
 
   return (
     <div className="rounded border border-[#1e1e1e] bg-[#111111] p-4 sm:p-6">
-      <h4 className="mb-1 font-['JetBrains_Mono'] text-xs uppercase tracking-wider text-[#888888]">
-        Momentum
-      </h4>
-      <p className="mb-4 text-[10px] text-[#666666]">7-day rolling activity</p>
+      <div className="mb-2 flex items-center justify-between">
+        <span className="font-['JetBrains_Mono'] text-xs text-[#888888]">Momentum</span>
+        <span className="font-['JetBrains_Mono'] text-[10px] text-[#666666]">7-day rolling activity</span>
+      </div>
       <div className="h-56 sm:h-64">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData}>
@@ -1058,18 +1138,13 @@ function MomentumChart({ heatmapData }: { heatmapData: Record<string, Record<str
               allowDecimals={false}
             />
             <Tooltip
-              contentStyle={{
-                backgroundColor: "#111111",
-                border: "1px solid #1e1e1e",
-                borderRadius: "4px",
-                fontSize: "12px",
-              }}
-              labelFormatter={(d: string) => {
-                const dt = new Date(d);
-                return dt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-              }}
+              content={<CustomChartTooltip activeLine={activeLine} labelFormatter={formatChartDate} />}
             />
-            <Legend wrapperStyle={{ fontSize: "11px", fontFamily: "JetBrains Mono" }} />
+            <Legend
+              wrapperStyle={{ fontSize: "12px", fontFamily: "JetBrains Mono" }}
+              onClick={handleLegendClick}
+              formatter={legendFormatter}
+            />
             <Line
               type="monotone"
               dataKey="total"
@@ -1077,6 +1152,9 @@ function MomentumChart({ heatmapData }: { heatmapData: Record<string, Record<str
               stroke="#ffffff"
               strokeWidth={2}
               dot={false}
+              activeDot={(!activeLine || activeLine === "total") ? { r: 4 } : false}
+              strokeOpacity={activeLine && activeLine !== "total" ? 0.1 : 1}
+              style={{ transition: "stroke-opacity 0.2s ease-in-out" }}
             />
             {platformKeys.map((key) => (
               <Line
@@ -1084,10 +1162,13 @@ function MomentumChart({ heatmapData }: { heatmapData: Record<string, Record<str
                 type="monotone"
                 dataKey={key}
                 name={key.charAt(0).toUpperCase() + key.slice(1)}
-                stroke={PLATFORM_COLORS[key] || "#888888"}
+                stroke={platformColors[key] || "#888888"}
                 strokeWidth={1.5}
                 dot={false}
                 strokeDasharray="4 2"
+                activeDot={(!activeLine || activeLine === key) ? { r: 3 } : false}
+                strokeOpacity={activeLine && activeLine !== key ? 0.1 : 1}
+                style={{ transition: "stroke-opacity 0.2s ease-in-out" }}
               />
             ))}
           </LineChart>
